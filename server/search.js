@@ -72,20 +72,42 @@ router.get('/', (req, res) => {
        LIMIT ?`, match, limit * 2);
   }
 
-  /* resolve to concepts, apply field and visibility filters, and lift exact
-     title hits to the top */
+  /* Resolve to concepts, apply field and visibility filters, and lift exact
+     title hits to the top.
+
+     Both lookups are batched. Doing them per row meant up to two queries for
+     every one of the (limit * 2) candidates — around 240 round trips for a
+     broad query — to read at most a few dozen distinct rows. */
+  const holes = n => Array(n).fill('?').join(',');
+
+  const articleIds = [...new Set(rows.filter(r => r.kind === 'article').map(r => r.ref_id))];
+  const articles = new Map();
+  if (articleIds.length)
+    for (const a of all(`SELECT a.* FROM articles a WHERE a.id IN (${holes(articleIds.length)})${vis.sql}`,
+                        ...articleIds, ...vis.args))
+      articles.set(a.id, a);
+
+  /* an article row resolves to its concept; a concept row is already one */
+  const conceptIdFor = r => {
+    if (r.kind !== 'article') return r.ref_id;
+    const a = articles.get(r.ref_id);
+    return a ? (a.concept_id || a.id) : null;       // null: not visible to this reader
+  };
+
+  const conceptIds = [...new Set(rows.map(conceptIdFor).filter(Boolean))];
+  const concepts = new Map();
+  if (conceptIds.length)
+    for (const c of all(`SELECT * FROM concepts WHERE id IN (${holes(conceptIds.length)})`, ...conceptIds))
+      concepts.set(c.id, c);
+
   const needle = q.toLowerCase();
   const seen = new Set();
   const out = [];
 
   for (const r of rows) {
-    let conceptId = r.ref_id, article = null;
-    if (r.kind === 'article') {
-      article = one(`SELECT a.* FROM articles a WHERE a.id = ?${vis.sql}`, r.ref_id, ...vis.args);
-      if (!article) continue;                       // not visible to this reader
-      conceptId = article.concept_id || article.id;
-    }
-    const c = one('SELECT * FROM concepts WHERE id = ?', conceptId);
+    const article = r.kind === 'article' ? articles.get(r.ref_id) : null;
+    if (r.kind === 'article' && !article) continue;  // not visible to this reader
+    const c = concepts.get(conceptIdFor(r));
     if (!c) continue;
     if (field && c.field !== field) continue;
     if (seen.has(c.id)) continue;                   // one row per concept

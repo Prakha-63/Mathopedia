@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script>
-  try{ var _t=localStorage.getItem("mathopedia-theme"); if(_t) document.documentElement.setAttribute("data-theme",_t); }catch(e){}
-  try{ var _s=localStorage.getItem("mathopedia-skin"); if(_s) document.documentElement.setAttribute("data-skin",_s); }catch(e){}
+  try{ var _t=localStorage.getItem("mathopedia-theme"); if(_t) document.documentElement.setAttribute("data-theme",_t); }catch(e){ /* storage unreadable (private mode, blocked site data): fall back to the default */ }
+  try{ var _s=localStorage.getItem("mathopedia-skin"); if(_s) document.documentElement.setAttribute("data-skin",_s); }catch(e){ /* storage unreadable (private mode, blocked site data): fall back to the default */ }
   /* every "today" in the demo comes from here, so nothing shows a stale date */
   function todayLabel(){
     return new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
@@ -4244,7 +4244,7 @@ function loginError(msg){
 function signOut(){
   SESSION = null;
   CURRENT_ROLE = 'visitor';
-  try{ sessionStorage.removeItem('mathopedia-session'); }catch(e){}
+  try{ sessionStorage.removeItem('mathopedia-session'); }catch(e){ /* storage unwritable: the session hint is a convenience, not the source of truth */ }
   closeAccountPanel();
   renderAccount();
   renderNotifBell();
@@ -4254,7 +4254,7 @@ function signOut(){
 
 function restoreSession(){
   let saved = null;
-  try{ saved = sessionStorage.getItem('mathopedia-session'); }catch(e){}
+  try{ saved = sessionStorage.getItem('mathopedia-session'); }catch(e){ /* storage unreadable: treated as no stored session */ }
   const acct = saved ? accountByUsername(saved) : null;
   if(acct){ SESSION = acct; CURRENT_ROLE = acct.role; }
 }
@@ -4845,7 +4845,7 @@ function copyTex(){
   const ta = document.getElementById('tex-src');
   ta.select();
   let ok = false;
-  try{ ok = document.execCommand('copy'); }catch(e){}
+  try{ ok = document.execCommand('copy'); }catch(e){ /* ok stays false and the caller reports the failure */ }
   if(!ok && navigator.clipboard){
     navigator.clipboard.writeText(ta.value).then(()=>toast('LaTeX copied to clipboard.'), ()=>{});
     return;
@@ -6875,7 +6875,7 @@ function toggleTheme(){
     || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const next = current === 'dark' ? 'light' : 'dark';
   root.setAttribute('data-theme', next);
-  try{ localStorage.setItem('mathopedia-theme', next); }catch(e){}
+  try{ localStorage.setItem('mathopedia-theme', next); }catch(e){ /* storage unwritable (private mode, quota): the preference just will not persist */ }
   redrawAllViz();   // canvases sample the theme tokens at draw time
   if(window.redrawHeroGraph) window.redrawHeroGraph();
 }
@@ -7859,7 +7859,7 @@ window.mfCopyMarkdown = function(){
       .join('\n\n')).join('\n\n');
   const ta = document.createElement('textarea');
   ta.value = md; document.body.appendChild(ta); ta.select();
-  let ok = false; try{ ok = document.execCommand('copy'); }catch(e){}
+  let ok = false; try{ ok = document.execCommand('copy'); }catch(e){ /* ok stays false and the caller reports the failure */ }
   ta.remove();
   if(typeof toast === 'function') toast(ok ? 'Copied as Markdown.' : 'Could not copy — select the text manually.');
 };
@@ -7934,7 +7934,7 @@ function setSkin(name, silent){
   if(!SKINS[name]) return;
   currentSkin = name;
   document.documentElement.setAttribute('data-skin', name);
-  try{ localStorage.setItem('mathopedia-skin', name); }catch(e){}
+  try{ localStorage.setItem('mathopedia-skin', name); }catch(e){ /* storage unwritable (private mode, quota): the preference just will not persist */ }
   document.querySelectorAll('.skin-opt').forEach(b =>
     b.classList.toggle('active', b.dataset.skin === name));
   repaintEverything();
@@ -8087,7 +8087,7 @@ function watchGrid(){
 function boot(){
   resolveMode();
   let saved = null;
-  try{ saved = localStorage.getItem('mathopedia-skin'); }catch(e){}
+  try{ saved = localStorage.getItem('mathopedia-skin'); }catch(e){ /* storage unreadable (private mode, blocked site data): fall back to the default */ }
   setSkin(SKINS[saved] ? saved : 'original', true);   // default: no surprise for existing users
   renderNav();
   refreshBands();
@@ -9615,7 +9615,7 @@ window.submitRegistration = function(){
   ACCOUNTS.push(acct);
   SESSION = acct;
   CURRENT_ROLE = 'visitor';
-  try{ sessionStorage.setItem('mathopedia-session', username); }catch(e){}
+  try{ sessionStorage.setItem('mathopedia-session', username); }catch(e){ /* storage unwritable: the session hint is a convenience, not the source of truth */ }
   el('register-error').classList.remove('show');
   renderAccount(); renderNav(); renderNotifBell();
   if(window._pendingApplyRole){
@@ -11386,7 +11386,7 @@ function refreshConfig(){
       CFG.supabaseAnonKey = saved.supabaseAnonKey;
       if(saved.redirectUrl) CFG.redirectUrl = saved.redirectUrl;
     }
-  }catch(e){}
+  }catch(e){ /* unreadable or malformed stored config: keep the built-in defaults */ }
   return CFG;
 }
 refreshConfig();
@@ -11748,21 +11748,21 @@ const AuthService = {
     if(probs.length) throw new Error(probs.join(' '));
     try{ localStorage.setItem(STORE_KEY, JSON.stringify({
       supabaseUrl: CFG.supabaseUrl, supabaseAnonKey: CFG.supabaseAnonKey,
-      redirectUrl: CFG.redirectUrl || null })); }catch(e){}
+      redirectUrl: CFG.redirectUrl || null })); }catch(e){ /* storage unwritable (private mode, quota): the preference just will not persist */ }
     SupabaseBackend.reset();
     this.backend = SupabaseBackend;
   },
 
   clearConfig(){
-    try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+    try{ localStorage.removeItem(STORE_KEY); }catch(e){ /* storage unreadable (private mode, blocked site data): fall back to the default */ }
     CFG.supabaseUrl = ''; CFG.supabaseAnonKey = '';
     SupabaseBackend.reset();
     this.backend = DemoBackend;
   },
 
   async logout(){
-    if(CFG.useNodeAuth !== false){ try{ await NodeBackend.logout(); }catch(e){} return; }
-    if(configured()){ try{ await SupabaseBackend.logout(); }catch(e){} }
+    if(CFG.useNodeAuth !== false){ try{ await NodeBackend.logout(); }catch(e){ /* the server could not be told; local state is cleared regardless so the user is signed out here */ } return; }
+    if(configured()){ try{ await SupabaseBackend.logout(); }catch(e){ /* the server could not be told; local state is cleared regardless so the user is signed out here */ } }
   },
 };
 window.AuthService = AuthService;
@@ -12077,7 +12077,7 @@ window.authSavePassword = async function(){
 function applySignedIn(acct){
   SESSION = acct;
   CURRENT_ROLE = acct.role || 'visitor';
-  try{ sessionStorage.setItem('mathopedia-session', acct.username || acct.email || ''); }catch(e){}
+  try{ sessionStorage.setItem('mathopedia-session', acct.username || acct.email || ''); }catch(e){ /* storage unwritable: the session hint is a convenience, not the source of truth */ }
   if(typeof renderAccount === 'function') renderAccount();
   if(typeof renderNav === 'function') renderNav();
   if(typeof renderNotifBell === 'function') renderNotifBell();
@@ -12085,7 +12085,7 @@ function applySignedIn(acct){
 function applySignedOut(){
   SESSION = null;
   CURRENT_ROLE = 'visitor';
-  try{ sessionStorage.removeItem('mathopedia-session'); }catch(e){}
+  try{ sessionStorage.removeItem('mathopedia-session'); }catch(e){ /* storage unwritable: the session hint is a convenience, not the source of truth */ }
   if(typeof renderAccount === 'function') renderAccount();
   if(typeof renderNav === 'function') renderNav();
   if(typeof renderNotifBell === 'function') renderNotifBell();
@@ -12145,7 +12145,7 @@ window.submitRegistration = async function(){
 /* ---- sign out ---- */
 const _signOutLocal = window.signOut;
 window.signOut = async function(){
-  try{ await AuthService.logout(); }catch(e){}
+  try{ await AuthService.logout(); }catch(e){ /* the sign-out request failed; local state is cleared regardless so the user is not left looking signed in */ }
   if(typeof closeAccountPanel === 'function') closeAccountPanel();
   applySignedOut();
   showView('home');
@@ -12168,7 +12168,7 @@ function onAuthChange(evt){
   }
 }
 function cleanUrl(){
-  try{ history.replaceState({}, '', location.pathname + location.hash); }catch(e){}
+  try{ history.replaceState({}, '', location.pathname + location.hash); }catch(e){ /* cosmetic URL tidy; a failure changes nothing the user can see */ }
 }
 
 /* Supabase reports a dead link by redirecting back with an error, in the query
@@ -12220,7 +12220,16 @@ function renderGoogleButton(){
 window.renderGoogleButton = renderGoogleButton;
 
 async function bootAuth(){
-  try{ window.SERVER_CONFIG = await NodeBackend.config(); }catch(e){}
+  /* What the server can actually do. If this cannot be read, assume nothing is
+     available rather than leaving it undefined: the sign-in page then offers
+     no Google button and no "email me a link", which is the honest state when
+     the server has not said otherwise. */
+  try{
+    window.SERVER_CONFIG = await NodeBackend.config();
+  }catch(e){
+    console.warn('[mathopedia] could not read server capabilities:', e.message);
+    window.SERVER_CONFIG = { google:false, smtp:false };
+  }
   renderGoogleButton();
 
   const mode = new URLSearchParams(location.search).get('mode');
@@ -12690,7 +12699,7 @@ function card(r, i){
   if(!c) return '';
   const a = ARTICLES.find(x => (x.conceptId || x.id) === c.id) || null;
   let bookmarked = false;
-  try{ bookmarked = BOOKMARKS[CURRENT_ROLE].includes(c.id); }catch(e){}
+  try{ bookmarked = BOOKMARKS[CURRENT_ROLE].includes(c.id); }catch(e){ /* no bookmark list for this role yet: not bookmarked */ }
   const showFlags = tryCall('isRole', false, 'reviewer', 'admin') && a && a.flags.length > 0;
   const prog = tryCall('progressOf', '', c.id);
   const pre = EDGES.filter(e => e.type === 'prerequisite' && e.to === c.id).length;
