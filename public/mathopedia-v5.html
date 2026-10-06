@@ -1183,6 +1183,24 @@ table.data td, table.hist td{ font-size:12.5px }
 .card, .feat-card, .path-card, .queue-item, .verify-card, .app-card, .dash-col, .field-panel, .apply-card, .apply-invite, .health-block, .section-editor, .mf-palette, .mf-page, .mf-tools, .preview-panel, .viz-stage, .map-side, .concept-strip, .admin-panel, .stat-card, .rev-workload{ border-radius:5px; box-shadow:none }
 .btn{ font-family:var(--ui); font-size:12.5px; font-weight:600; letter-spacing:0; text-transform:none; padding:9px 15px; border-radius:5px; border:1px solid var(--ink); background:var(--ink); color:var(--paper); transition:transform .16s var(--ease), box-shadow .2s var(--ease), opacity .16s var(--ease); box-shadow:none }
 .btn:hover{ opacity:0.82; background:var(--ink); transform:none; box-shadow:none }
+
+/* ---------- button hierarchy ----------
+   Three named levels, so intent is written down rather than inferred from
+   which modifier happens to be missing. A plain .btn has always rendered as
+   the primary action; .primary now says so, and .secondary is the name for
+   what .outline already did. Both are aliases — existing markup keeps its
+   appearance exactly.
+
+   .danger is deliberately quieter than .primary: outlined, never filled
+   until hover, so Delete and Suspend cannot be mistaken for the action a
+   panel is actually there to perform. */
+.btn.primary{ background:var(--ink); color:var(--paper); border-color:var(--ink) }
+.btn.primary:hover{ background:var(--ink); opacity:0.82 }
+.btn.secondary{ background:transparent; color:var(--ink); border-color:var(--rule-strong); box-shadow:none }
+.btn.secondary:hover{ background:var(--sunken); color:var(--ink); opacity:1; border-color:var(--ink-faint) }
+.btn.danger:focus-visible{ outline:2px solid var(--danger); outline-offset:2px }
+.btn.primary:focus-visible, .btn.secondary:focus-visible{ outline:2px solid var(--accent); outline-offset:2px }
+
 .hero-primary, .login-primary{ border-radius:7px }
 .notif-panel, .account-panel, #toast, .mailsim, .chip-editor{ border-radius:7px }
 .feat-card:hover, .path-card:hover, .field-tile:hover, .universe-promo:hover{ transform:none }
@@ -1343,8 +1361,10 @@ header, .banner-note, .action-row, .tabs, footer, .toc, .side-block, .print-hide
   .hero-search .btn{ border-radius:7px; width:100%; margin-top:8px }
   .hero-search .hs-icon{ top:24px }
   .hero-art-cap{ display:none }
-  /* the vignette cannot clear a narrow column, so quiet the mesh instead */
-  .hero-art{ opacity:.4 }
+  /* The vignette cannot clear a narrow column, so quiet the mesh instead.
+     At 0.4 the grid lines still ran straight through the body copy once the
+     hero stacked; the art is decoration and the sentence is not. */
+  .hero-art{ opacity:.16 }
 }
 
 @media (max-width:480px){
@@ -10202,7 +10222,9 @@ function submitScholarApplication(){
   if(typeof audit === 'function') audit('Scholar application submitted', `${name} · ${roleLabel(applyRole)}`);
   renderNotifBell();
   showView('profile');
-  toast('Application submitted — it is now awaiting administrator verification.');
+  /* Honest wording: the application is held in this tab only. Review is not
+     wired to the server yet, so it must not promise administrator action. */
+  toast('Application recorded in this session. Scholar review is not yet connected to the server.');
 }
 window.submitScholarApplication = submitScholarApplication;
 
@@ -10344,10 +10366,29 @@ function activateAccount(username){
 }
 window.activateAccount = activateAccount;
 
-/* admin console section */
+/* Admin console section — not registered.
+
+   This panel is complete in the browser and does nothing on the server.
+   Applications live in the in-memory APPLICATIONS array and are gone on
+   reload, and approving one sets acct.role on a client-side object: no
+   request is made, so nobody is actually promoted. An administrator using
+   it would believe they had granted a role that was never granted, which is
+   worse than the panel being absent.
+
+   The schema is ready for it — server/schema.sql already defines an
+   applications table whose columns match the object built in
+   submitScholarApplication, down to the status values. Completing it needs
+   persistence (list, file, decide) and, critically, approval routed through
+   an authorised, audited server-side role change rather than an assignment
+   in the page. That is a backend feature, not a cleanup, so it is left
+   undone and the panel is left unregistered rather than shipped misleading.
+
+   Re-enable by restoring this splice once those endpoints exist.
+
 ADMIN_SECTIONS[1].items.splice(1, 0, { key:'applications', label:'Scholar Applications',
   blurb:'Contributor and reviewer applications filed against existing accounts.',
   count: () => APPLICATIONS.filter(a => a.status === 'pending' || a.status === 'more_info').length });
+*/
 
 const _renderAdmin = window.renderAdmin;
 window.renderAdmin = function(){
