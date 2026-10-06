@@ -1,0 +1,21 @@
+{
+  "name": "mathopedia",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A peer-reviewed encyclopedia of mathematics — Express + SQLite/FTS5, served from one origin.",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node --experimental-sqlite --no-warnings --env-file=.env server/server.js",
+    "migrate": "node --experimental-sqlite --no-warnings --env-file=.env scripts/migrate.js",
+    "check": "node --experimental-sqlite --no-warnings --env-file=.env scripts/check.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.14"
+  }
+}

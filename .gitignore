@@ -1,0 +1,21 @@
+# secrets — never commit
+.env
+.env.*
+!.env.example
+
+# the database and SQLite's sidecar files (WAL holds uncheckpointed data)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/backups/
+
+node_modules/
+
+# transient junk from local runs and manual API testing
+*.log
+*.cookies
+c.txt
+cookies.txt
+npm-debug.log*
+.DS_Store
+Thumbs.db
