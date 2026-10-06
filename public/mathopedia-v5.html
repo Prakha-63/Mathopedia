@@ -1735,7 +1735,7 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
   </div>
 </header>
 <div class="banner-note">
-  Demo build — the four accounts on the sign-in page are checked in the browser, not by a server, so this is a workflow demonstration rather than real authentication. All content changes (articles, reviews, notifications, bookmarks) live only in this browser tab and reset on reload.
+  Running locally. Accounts, articles, reviews and revisions are held in the project's SQLite database and persist across restarts. The sign-in page lists demo accounts so the Contributor, Reviewer and Administrator workflows can be examined without registering.
 </div>
 
 <div id="toast"></div>
@@ -2292,7 +2292,7 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
               <div class="demo-key" onclick="fillLogin('reviewer')"><div class="dk-role">Reviewer<span>Decide on submissions</span></div><div class="dk-cred">reviewer<br>review123</div></div>
               <div class="demo-key" onclick="fillLogin('admin')"><div class="dk-role">Administrator<span>Seeded admin account</span></div><div class="dk-cred">admin<br>admin123</div></div>
             </div>
-            <p class="auth-foot"><b>Demo build.</b> Accounts are checked in the browser, not by a server. Signing in routes you by role — administrators to the console, reviewers to the workspace, contributors to the editor.</p>
+            <p class="auth-foot"><b>Demo accounts.</b> These are real accounts in the local database, verified by the server like any other. Signing in routes you by role — administrators to the console, reviewers to the workspace, contributors to the editor.</p>
           </details>
         </div>
       </section>
@@ -2439,7 +2439,7 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
               <li><b>Contributor</b> — requires a scholar application with evidence of a Master's, doctorate or equivalent, verified by an administrator.</li>
               <li><b>Reviewer</b> — requires a scholar application, declared fields of expertise and a conflict-of-interest declaration.</li>
               <li>Administrator accounts are never publicly registered.</li>
-              <li><b>Demo build:</b> registrations live only in this browser tab and reset on reload.</li>
+              <li>Registering sends a confirmation email. The address must be confirmed before the account can sign in.</li>
             </ol>
           </details>
         </div>
