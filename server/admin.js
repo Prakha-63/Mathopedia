@@ -3,14 +3,12 @@ import { all, one, run, tx, now } from './db.js';
 import { requireRole } from './auth.js';
 import { audit } from './audit.js';
 import { rebuildIndex } from './search.js';
+import { ok } from './http.js';
 
 export const router = express.Router();
 router.use(requireRole('admin'));       // every route below is administrator-only
 
 const ROLES = ['visitor', 'pending', 'contributor', 'reviewer', 'admin'];
-const ok = fn => (req, res) => Promise.resolve(fn(req, res)).catch(e => {
-  console.error(e.message); res.status(500).json({ error: e.message || 'Server error.' });
-});
 
 const shape = u => ({ id: u.id, email: u.email, name: u.name, username: u.username,
   credential: u.credential, role: u.role, verified: !!u.email_verified,

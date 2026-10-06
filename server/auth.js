@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { one, run, now } from './db.js';
 import { audit } from './audit.js';
 import { sendVerification, sendReset } from './mail.js';
+import { ok } from './http.js';
 
 export const router = express.Router();
 
@@ -119,9 +120,6 @@ export function requireRole(...roles) {
   };
 }
 
-const ok = fn => (req, res) => fn(req, res).catch(e => {
-  console.error(e.message); res.status(500).json({ error: e.message || 'Server error.' });
-});
 
 /* ---------------------------------------------------------------- routes */
 router.post('/register', ok(async (req, res) => {

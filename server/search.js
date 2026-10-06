@@ -58,12 +58,14 @@ router.get('/', (req, res) => {
   if (!match) {
     rows = symbolSearch(q, limit);
   } else {
-    /* bm25 weights: title matters most, then tags, then body. It returns a
-       negative score where lower is better, so it is negated for sorting. */
+    /* bm25 takes one weight per column, in table order, so all five must be
+       listed: ref_id and kind are UNINDEXED and can never match, then title
+       matters most, then tags, then body. It returns a negative score where
+       lower is better, so it is negated for sorting. */
     rows = all(`
       SELECT f.ref_id, f.kind, f.title,
              snippet(search_fts, 3, '<mark>', '</mark>', '…', 14) snippet,
-             -bm25(search_fts, 10.0, 1.0, 4.0) score
+             -bm25(search_fts, 0.0, 0.0, 10.0, 1.0, 4.0) score
         FROM search_fts f
        WHERE search_fts MATCH ?
        ORDER BY score DESC

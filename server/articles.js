@@ -5,12 +5,9 @@ import { audit } from './audit.js';
 import { dateLabel } from './api.js';
 import { indexArticle, indexConcept } from './search.js';
 import { setArticleRefs, articleRefs, usageCounts } from './refs.js';
+import { ok } from './http.js';
 
 export const router = express.Router();
-
-const ok = fn => (req, res) => Promise.resolve(fn(req, res)).catch(e => {
-  console.error(e.message); res.status(500).json({ error: e.message || 'Server error.' });
-});
 
 const meta = v => ({ id: v.id, version: v.version, editor: v.editor_name,
   summary: v.summary, date: dateLabel(v.created_at), at: v.created_at,

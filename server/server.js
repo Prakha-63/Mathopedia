@@ -53,6 +53,21 @@ function renderPage(_req, res) {
 app.get(['/', '/index.html', '/' + PAGE, '/verify-email', '/reset-password'], renderPage);
 app.use(express.static(SITE_DIR));
 
+/* Last resort. Errors raised before a route runs — a malformed percent-escape
+   in the path, or JSON that express.json() cannot parse — never reach a
+   route's own handler, and Express would answer them with an HTML page
+   carrying a stack trace. An /api caller gets JSON; anything else gets a
+   bare status. */
+app.use((err, req, res, _next) => {
+  console.error(`[${req.method} ${req.originalUrl}]`, err);
+  if (res.headersSent) return;
+  const code = err.status || err.statusCode || 500;
+  const msg = code === 400 ? 'That request could not be understood.'
+                           : 'Something went wrong. Please try again.';
+  if (req.path.startsWith('/api/')) res.status(code).json({ error: msg });
+  else res.status(code).type('text').send(msg);
+});
+
 app.listen(PORT, () => {
   console.log(`Mathopedia on ${APP_URL}`);
   if (!smtpReady())   console.warn('  [warn] SMTP not configured — no email will be sent');
