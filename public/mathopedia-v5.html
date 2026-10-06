@@ -1673,6 +1673,31 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
 .card p mark{ background:color-mix(in srgb, var(--seal) 28%, transparent); color:var(--ink);
   border-radius:2px; padding:0 1px }
 
+/* ---------- server unavailable ----------
+   Shown when the page loads without its bootstrap payload. It covers the
+   shell rather than sitting inside it, because none of the views behind it
+   have anything to render. Built from the same tokens, so it follows the
+   theme like everything else. */
+html[data-unavailable] body > *:not(.srv-down){ display:none !important }
+.srv-down{ position:fixed; inset:0; z-index:9999; display:grid; place-items:center;
+  padding:24px 16px; background:var(--paper); overflow-y:auto }
+.srv-down-card{ max-width:460px; width:100%; text-align:center; background:var(--card);
+  border:1px solid var(--rule); border-radius:10px; box-shadow:var(--e2); padding:40px 32px }
+.srv-down-mark{ color:var(--seal); display:flex; justify-content:center; margin-bottom:18px }
+.srv-down-card h1{ font-family:var(--serif); font-size:23px; font-weight:600; line-height:1.3;
+  color:var(--ink); margin:0 0 14px }
+.srv-down-card p{ font-family:var(--ui); font-size:13.5px; line-height:1.68;
+  color:var(--ink-soft); margin:0 0 14px }
+.srv-down-fix{ margin-top:22px !important; margin-bottom:8px !important;
+  font-weight:500; color:var(--ink) !important }
+.srv-down-card pre{ margin:0 0 14px; padding:12px 14px; background:var(--sunken);
+  border:1px solid var(--rule); border-radius:var(--radius); text-align:left; overflow-x:auto }
+.srv-down-card pre code{ font-family:var(--mono); font-size:13px; color:var(--ink) }
+.srv-down-fine{ font-size:12px !important; color:var(--ink-faint) !important }
+.srv-down-fine code{ font-family:var(--mono); font-size:11.5px }
+.srv-down-card .btn{ margin-top:8px }
+@media (max-width:420px){ .srv-down-card{ padding:30px 20px } .srv-down-card h1{ font-size:20px } }
+
 /* ---------- references ---------- */
 .ref-list{ margin:10px 0 0; padding-left:22px }
 .ref-list li{ font-family:var(--ui); font-size:13px; line-height:1.65; color:var(--ink-soft); margin-bottom:9px }
@@ -2798,186 +2823,12 @@ const CATS = {
 /* ============================================================
    ARTICLES DATA (seeded, mutable in-memory)
    ============================================================ */
-let ARTICLES = [
-  { id:'euler-identity', cat:'analysis', status:'reviewed',
-    title:"Euler's Identity",
-    author:'Dr. E. Marchetti', credential:'Ph.D. in Complex Analysis',
-    reviewer:'Dr. K. Bergström', date:'Jun 3, 2026', views:4182,
-    tags:['complex analysis','Euler','exponential function','trigonometry'],
-    abstract:"Euler's identity links five of the most important constants in mathematics — \\(0\\), \\(1\\), \\(e\\), \\(i\\), and \\(\\pi\\) — in a single equation, and is frequently cited as an example of deep mathematical beauty.",
-    sections:[
-      { heading:'Statement', body:"For the base of the natural logarithm \\(e\\), the imaginary unit \\(i\\), and \\(\\pi\\), the identity states:</p><p>\\[ e^{i\\pi} + 1 = 0 \\]<p>The equation combines addition, multiplication, exponentiation, and equality, alongside five fundamental constants, in a single compact statement." },
-      { heading:'Derivation from Euler\u2019s Formula', body:"Euler's identity follows directly from Euler's formula, which holds for any real number \\(x\\):</p><p>\\[ e^{ix} = \\cos x + i\\sin x \\]<p>Setting \\(x = \\pi\\) gives \\(e^{i\\pi} = \\cos\\pi + i\\sin\\pi = -1 + i\\cdot 0 = -1\\), and rearranging yields \\(e^{i\\pi} + 1 = 0\\)." },
-      { heading:'Significance', body:"Beyond its aesthetic appeal, the identity is a special case of a broader correspondence between exponential and trigonometric functions that underlies Fourier analysis, AC circuit theory, and quantum mechanics." }
-    ],
-    references:['Euler, L. Introductio in analysin infinitorum (1748).','Nahin, P.J. Dr. Euler\u2019s Fabulous Formula. Princeton University Press, 2006.'],
-    history:[
-      {version:'v3.0', editor:'Dr. K. Bergström', summary:'Approved after minor notation fix', date:'Jun 3, 2026'},
-      {version:'v2.0', editor:'Dr. E. Marchetti', summary:'Expanded derivation with intermediate steps', date:'May 22, 2026'},
-      {version:'v1.0', editor:'Dr. E. Marchetti', summary:'Initial submission', date:'May 10, 2026'}
-    ],
-    comments:[
-      {who:'M. Alvarez', cred:'M.Sc. student', txt:'Could someone expand on the step going from the third to the fourth line?'},
-      {who:'Dr. E. Marchetti', cred:'Contributor', txt:'Good catch — I\u2019ve added an intermediate line to the derivation section.'}
-    ],
-    flags:[]
-  },
-  { id:'riemann-hypothesis', cat:'numtheory', status:'reviewed',
-    title:'The Riemann Hypothesis',
-    author:'Dr. N. Osei', credential:'Ph.D. in Analytic Number Theory',
-    reviewer:'Dr. J. Alcaraz', date:'May 18, 2026', views:9760,
-    tags:['zeta function','prime numbers','unsolved problems','Millennium Prize'],
-    abstract:"The Riemann Hypothesis proposes that every non-trivial zero of the Riemann zeta function has real part \\(\\tfrac{1}{2}\\). First conjectured in 1859, it remains one of the most consequential open problems in mathematics.",
-    sections:[
-      { heading:'The Zeta Function', body:"For a complex number \\(s\\) with real part greater than \\(1\\):</p><p>\\[ \\zeta(s) = \\sum_{n=1}^{\\infty} \\frac{1}{n^s} \\]<p>The series converges only for \\(\\mathrm{Re}(s) &gt; 1\\). Riemann showed that \\(\\zeta\\) extends uniquely by analytic continuation to a meromorphic function on \\(\\mathbb{C}\\), holomorphic everywhere except for a simple pole at \\(s=1\\) with residue \\(1\\)." },
-      { heading:'Statement of the Hypothesis', body:"The Riemann Hypothesis asserts that every non-trivial zero \\(s\\) satisfies:</p><p>\\[ \\mathrm{Re}(s) = \\frac{1}{2} \\]<p>Extensive numerical verification has confirmed this for trillions of zeros, though no general proof is known." },
-      { heading:'Status and Significance', body:"The hypothesis is one of the seven Millennium Prize Problems named by the Clay Mathematics Institute in 2000. A resolution would sharpen our understanding of the distribution of prime numbers." }
-    ],
-    references:['Riemann, B. Über die Anzahl der Primzahlen unter einer gegebenen Grösse (1859).','Bombieri, E. Problems of the Millennium: The Riemann Hypothesis. Clay Mathematics Institute, 2000.'],
-    history:[
-      {version:'v2.0', editor:'Dr. J. Alcaraz', summary:'Approved for publication', date:'May 18, 2026'},
-      {version:'v1.0', editor:'Dr. N. Osei', summary:'Initial submission', date:'Apr 30, 2026'}
-    ],
-    comments:[{who:'D. Kowalski', cred:'Independent reader', txt:'Really clear write-up, thank you.'}],
-    flags:[]
-  },
-  { id:'stokes-theorem', cat:'topology', status:'reviewed',
-    figure:{ type:'surface3d', expr:'sin(x)*cos(y)', range:6,
-      caption:'A smooth oriented surface of the kind the theorem integrates over. Drag to rotate: the boundary curve traced by the edge of the patch is what the right-hand side of the identity sees.' },
-    title:"Stokes' Theorem",
-    author:'Dr. L. Vantongeren', credential:'Ph.D. in Differential Geometry',
-    reviewer:'Dr. K. Bergström', date:'Apr 27, 2026', views:2904,
-    tags:['differential forms','manifolds','vector calculus','Green\u2019s theorem'],
-    abstract:"The generalized Stokes' theorem relates the integral of a differential form over the boundary of an oriented manifold to the integral of its exterior derivative over the manifold itself.",
-    sections:[
-      { heading:'General Statement', body:"Let \\(M\\) be a compact, oriented \\(k\\)-dimensional manifold with boundary \\(\\partial M\\), and \\(\\omega\\) a smooth \\((k-1)\\)-form on \\(M\\):</p><p>\\[ \\int_M d\\omega = \\int_{\\partial M} \\omega \\]" },
-      { heading:'Classical Special Cases', body:"In the plane this reduces to Green's theorem; on a surface in \\(\\mathbb{R}^3\\) it recovers the classical Kelvin–Stokes theorem; on a solid region it becomes the divergence theorem." },
-      { heading:'Significance', body:"Stokes' theorem is a foundational tool in differential topology and mathematical physics, including the formulation of Maxwell's equations in differential-forms language." }
-    ],
-    references:['Spivak, M. Calculus on Manifolds. Addison-Wesley, 1965.','Lee, J.M. Introduction to Smooth Manifolds. Springer, 2013.'],
-    history:[
-      {version:'v2.0', editor:'Dr. K. Bergström', summary:'Approved for publication', date:'Apr 27, 2026'},
-      {version:'v1.0', editor:'Dr. L. Vantongeren', summary:'Initial submission', date:'Apr 12, 2026'}
-    ],
-    comments:[], flags:[]
-  },
-  { id:'bayes-theorem', cat:'probability', status:'reviewed',
-    title:"Bayes' Theorem",
-    author:'Dr. S. Iyer', credential:'Ph.D. in Probability Theory',
-    reviewer:'Dr. P. Odusanya', date:'Jun 21, 2026', views:6315,
-    tags:['conditional probability','Bayesian inference','statistics'],
-    abstract:"Bayes' theorem describes how to update the probability of a hypothesis in light of new evidence. It is the foundation of Bayesian inference, used across statistics, machine learning, and the sciences.",
-    sections:[
-      { heading:'Statement', body:"For two events \\(A\\) and \\(B\\) with \\(P(B) \\neq 0\\):</p><p>\\[ P(A \\mid B) = \\frac{P(B \\mid A)\\,P(A)}{P(B)} \\]" },
-      { heading:'Derivation', body:"Since \\(P(A \\cap B) = P(A \\mid B)P(B) = P(B \\mid A)P(A)\\), solving for \\(P(A \\mid B)\\) gives the theorem." },
-      { heading:'Worked example: a diagnostic test', body:"Let \\(D\\) be the event that a person has a disease and \\(+\\) the event that they test positive. Suppose</p><p>\\[ P(D)=0.01, \\quad P(+\\mid D)=0.99, \\quad P(+\\mid D^{c})=0.05 \\]<p>so the prevalence is \\(1\\%\\), the test detects \\(99\\%\\) of true cases, and it returns a false positive for \\(5\\%\\) of healthy people. The denominator comes from the law of total probability:</p><p>\\[ P(+) = P(+\\mid D)P(D) + P(+\\mid D^{c})P(D^{c}) = (0.99)(0.01) + (0.05)(0.99) = 0.0594 \\]<p>Therefore</p><p>\\[ P(D \\mid +) = \\frac{(0.99)(0.01)}{0.0594} = \\frac{0.0099}{0.0594} = \\frac{1}{6} \\approx 0.167 \\]<p>A positive result raises the probability from \\(1\\%\\) to about \\(17\\%\\) — a large relative increase, but still far from certainty. The reason is that healthy people outnumber sick ones so heavily that their \\(5\\%\\) false-positive rate produces five times as many positives as the disease itself. Reading \\(P(+\\mid D)=0.99\\) as though it were \\(P(D\\mid +)\\) is the base-rate fallacy." },
-      { heading:'Applications', body:"Bayes' theorem underlies spam filtering, medical diagnostic testing, and modern machine learning methods such as Bayesian networks and naive Bayes classifiers." }
-    ],
-    references:['Bayes, T. An Essay towards solving a Problem in the Doctrine of Chances (1763).','Gelman, A. et al. Bayesian Data Analysis. CRC Press, 2013.'],
-    history:[
-      {version:'v2.0', editor:'Dr. P. Odusanya', summary:'Approved for publication', date:'Jun 21, 2026'},
-      {version:'v1.0', editor:'Dr. S. Iyer', summary:'Initial submission', date:'Jun 5, 2026'}
-    ],
-    comments:[], flags:[]
-  },
-  { id:'fta', cat:'algebra', status:'reviewed',
-    title:'The Fundamental Theorem of Algebra',
-    author:'R. Fennimore', credential:'Ph.D. Candidate in Algebra',
-    reviewer:'Dr. J. Alcaraz', date:'Mar 12, 2026', views:3027,
-    tags:['polynomials','complex numbers','roots'],
-    abstract:"Every non-constant polynomial with complex coefficients has at least one complex root, guaranteeing that the complex numbers are algebraically complete.",
-    sections:[ { heading:'Statement', body:"For any non-constant polynomial \\(p(z) = a_n z^n + \\cdots + a_0\\) with \\(a_i \\in \\mathbb{C}\\), there exists \\(z_0\\) such that \\(p(z_0)=0\\)." } ],
-    references:['Gauss, C.F. Demonstratio nova theorematis (1799).'],
-    history:[
-      {version:'v2.0', editor:'Dr. J. Alcaraz', summary:'Approved for publication', date:'Mar 12, 2026'},
-      {version:'v1.0', editor:'R. Fennimore', summary:'Initial submission', date:'Feb 28, 2026'}
-    ],
-    comments:[], flags:[]
-  },
-  { id:'ftc', cat:'analysis', status:'reviewed',
-    title:'The Fundamental Theorem of Calculus',
-    author:'Dr. E. Marchetti', credential:'Ph.D. in Complex Analysis',
-    reviewer:'Dr. K. Bergström', date:'Feb 8, 2026', views:8442,
-    tags:['calculus','integration','differentiation'],
-    abstract:"For a continuous integrand, differentiation and integration are mutually inverse: the derivative of an accumulation function recovers the integrand, and a definite integral can be evaluated from any antiderivative.",
-    sections:[ { heading:'Statement', body:"Let \\(f\\) be continuous on \\([a,b]\\).</p><p><b>First part.</b> Define \\(F(x)=\\int_a^x f(t)\\,dt\\). Then \\(F\\) is differentiable on \\((a,b)\\) and \\(F'(x)=f(x)\\) there.</p><p><b>Second part.</b> If \\(G\\) is any antiderivative of \\(f\\) on \\([a,b]\\), meaning \\(G'=f\\) throughout, then</p><p>\\[ \\int_a^b f(x)\\,dx = G(b)-G(a) \\]<p>Continuity is doing the work in the first part: without it \\(F\\) need not be differentiable at every point. The second part holds more generally for any Riemann-integrable \\(f\\) admitting an antiderivative on \\([a,b]\\)." } ],
-    references:['Newton, I. Method of Fluxions (1671, published 1736).'],
-    history:[
-      {version:'v2.0', editor:'Dr. K. Bergström', summary:'Approved for publication', date:'Feb 8, 2026'},
-      {version:'v1.0', editor:'Dr. E. Marchetti', summary:'Initial submission', date:'Jan 22, 2026'}
-    ],
-    comments:[], flags:[]
-  },
-  { id:'pythagorean', cat:'geometry', status:'under_review',
-    title:'The Pythagorean Theorem',
-    author:'Dr. L. Vantongeren', credential:'Ph.D. in Differential Geometry',
-    reviewer:null, date:'Jul 2, 2026', views:1188,
-    tags:['triangles','Euclidean geometry'],
-    abstract:"In a right triangle in the Euclidean plane, the square of the length of the hypotenuse equals the sum of the squares of the lengths of the other two sides.",
-    sections:[ { heading:'Statement', body:"Let a triangle in the Euclidean plane have legs of length \\(a\\) and \\(b\\) meeting at a right angle, with hypotenuse of length \\(c\\). Then</p><p>\\[ a^2+b^2=c^2 \\]<p>The converse holds as well: if the three side lengths of a triangle satisfy \\(a^2+b^2=c^2\\), then the angle opposite the side of length \\(c\\) is a right angle (Euclid, <i>Elements</i> I.48). Both directions are theorems of Euclidean geometry and fail on the sphere and in the hyperbolic plane, where the angle sum of a triangle is not \\(\\pi\\)." } ],
-    references:['Euclid. Elements, Book I, Proposition 47 (c. 300 BC).'],
-    history:[ {version:'v1.0', editor:'Dr. L. Vantongeren', summary:'Initial submission', date:'Jul 2, 2026'} ],
-    comments:[], flags:[]
-  },
-  { id:'fermat-little', cat:'numtheory', status:'reviewed',
-    title:"Fermat's Little Theorem",
-    author:'Dr. N. Osei', credential:'Ph.D. in Analytic Number Theory',
-    reviewer:'Dr. P. Odusanya', date:'Jan 30, 2026', views:2540,
-    tags:['modular arithmetic','prime numbers'],
-    abstract:"If \\(p\\) is prime, then for any integer \\(a\\) not divisible by \\(p\\), \\(a^{p-1}\\equiv 1 \\pmod p\\).",
-    sections:[ { heading:'Statement', body:"Let \\(p\\) be prime and let \\(a\\) be an integer with \\(p \\nmid a\\). Then</p><p>\\[ a^{p-1} \\equiv 1 \\pmod{p} \\]<p>Multiplying through by \\(a\\) removes the hypothesis and gives the equivalent form \\(a^{p} \\equiv a \\pmod p\\), which holds for <i>every</i> integer \\(a\\). The converse fails: there are composite \\(n\\) with \\(a^{n-1}\\equiv 1 \\pmod n\\) for every \\(a\\) coprime to \\(n\\). These are the Carmichael numbers, the smallest being \\(561 = 3 \\times 11 \\times 17\\)." } ],
-    references:['Fermat, P. Letter to Frénicle de Bessy (1640).'],
-    history:[
-      {version:'v2.0', editor:'Dr. P. Odusanya', summary:'Approved for publication', date:'Jan 30, 2026'},
-      {version:'v1.0', editor:'Dr. N. Osei', summary:'Initial submission', date:'Jan 15, 2026'}
-    ],
-    comments:[], flags:[]
-  },
-  { id:'clt', cat:'probability', status:'reviewed',
-    figure:{ type:'plot2d', expr:'exp(-x^2/2)/sqrt(2pi)', domain:[-4,4],
-      caption:'The standard normal density \u03c6(x) = e^{-x\u00b2/2}/\u221a(2\u03c0) \u2014 the limiting shape the theorem guarantees, whatever the distribution of the individual terms.' },
-    title:'The Central Limit Theorem',
-    author:'Dr. S. Iyer', credential:'Ph.D. in Probability Theory',
-    reviewer:'Dr. P. Odusanya', date:'Apr 4, 2026', views:5091,
-    tags:['statistics','normal distribution','convergence'],
-    abstract:"If \\(X_1,X_2,\\dots\\) are independent and identically distributed with finite mean \\(\\mu\\) and finite non-zero variance \\(\\sigma^2\\), their standardised partial sums converge in distribution to the standard normal law, whatever the shape of the common distribution.",
-    sections:[ { heading:'Statement', body:"Let \\(X_1,X_2,\\dots\\) be independent and identically distributed with \\(\\mathbb{E}[X_i]=\\mu\\) and \\(\\operatorname{Var}(X_i)=\\sigma^2\\), where \\(0 &lt; \\sigma^2 &lt; \\infty\\). Then</p><p>\\[ \\frac{\\sum_{i=1}^n X_i - n\\mu}{\\sigma\\sqrt{n}} \\ \\xrightarrow{d}\\ \\mathcal{N}(0,1) \\]<p>The finite-variance hypothesis is not decorative. A Cauchy distribution has no finite mean or variance, and the average of \\(n\\) independent Cauchy variables is Cauchy again for every \\(n\\) — it never approaches a normal law. Note also that convergence is <i>in distribution</i>; the theorem says nothing about any individual realisation." } ],
-    references:['Lindeberg, J.W. Eine neue Herleitung des Exponentialgesetzes (1922).'],
-    history:[
-      {version:'v2.0', editor:'Dr. P. Odusanya', summary:'Approved for publication', date:'Apr 4, 2026'},
-      {version:'v1.0', editor:'Dr. S. Iyer', summary:'Initial submission', date:'Mar 20, 2026'}
-    ],
-    comments:[], flags:[]
-  },
-  { id:'euler-polyhedron', cat:'combinatorics', status:'under_review',
-    title:"Euler's Polyhedron Formula",
-    author:'Dr. T. Nakashima', credential:'Ph.D. in Combinatorics',
-    reviewer:null, date:'Jul 9, 2026', views:412,
-    tags:['polyhedra','graph theory','Euler characteristic'],
-    abstract:"For any convex polyhedron, the numbers of vertices, edges, and faces are related by a strikingly simple formula.",
-    sections:[ { heading:'Statement', body:"For a <b>convex</b> polyhedron with \\(V\\) vertices, \\(E\\) edges and \\(F\\) faces:</p><p>\\[ V - E + F = 2 \\]<p>The convexity hypothesis matters; what is really required is that the surface be topologically a sphere. The quantity \\(V-E+F\\) is the Euler characteristic of the surface, and it takes other values otherwise — a polyhedron with a hole through it is topologically a torus and gives \\(V-E+F=0\\). Checking the cube: \\(V=8\\), \\(E=12\\), \\(F=6\\), so \\(8-12+6=2\\)." } ],
-    references:['Euler, L. Elementa doctrinae solidorum (1758).'],
-    history:[ {version:'v1.0', editor:'Dr. T. Nakashima', summary:'Initial submission', date:'Jul 9, 2026'} ],
-    comments:[], flags:[]
-  }
-];
+let ARTICLES = [];
 
 /* ============================================================
    USERS (admin-managed, in-memory)
    ============================================================ */
-let USERS = [
-  {id:1, name:'Dr. E. Marchetti', credential:'Ph.D. in Complex Analysis', role:'contributor', verified:true, active:true},
-  {id:2, name:'Dr. N. Osei', credential:'Ph.D. in Analytic Number Theory', role:'contributor', verified:true, active:true},
-  {id:3, name:'R. Fennimore', credential:'Ph.D. Candidate in Algebra', role:'contributor', verified:true, active:true},
-  {id:4, name:'Dr. S. Iyer', credential:'Ph.D. in Probability Theory', role:'contributor', verified:true, active:true},
-  {id:5, name:'Dr. L. Vantongeren', credential:'Ph.D. in Differential Geometry', role:'contributor', verified:true, active:true},
-  {id:6, name:'Dr. T. Nakashima', credential:'Ph.D. in Combinatorics', role:'contributor', verified:true, active:true},
-  {id:7, name:'Dr. K. Bergström', credential:'Ph.D. in Analysis', role:'reviewer', verified:true, active:true},
-  {id:8, name:'Dr. J. Alcaraz', credential:'Ph.D. in Number Theory', role:'reviewer', verified:true, active:true},
-  {id:9, name:'Dr. P. Odusanya', credential:'Platform Administrator', role:'admin', verified:true, active:true},
-  {id:10, name:'M. Alvarez', credential:'M.Sc. student — applied for Contributor access', role:'pending', verified:false, active:true},
-  {id:11, name:'J. Okonkwo', credential:'Ph.D. Candidate in Topology — applied for Contributor access', role:'pending', verified:false, active:true},
-];
+let USERS = [];
 
 /* ============================================================
    ACCOUNTS / ROLE STATE
@@ -3457,7 +3308,8 @@ function setCat(key){ activeCat=key; renderCats(); renderGrid(); }
 function onSearch(v){ searchTerm=v; document.getElementById('search-input-hero').value=v; renderGrid(); }
 function syncSearch(v){ searchTerm=v; document.getElementById('search-input-top').value=v; renderGrid(); }
 
-function renderHome(){ seedStats(); renderCats(); renderGrid(); renderRecentlyViewed(); renderOnThisDay(); }
+/* renderHome: an earlier definition stood here — superseded by the fuller definition later in the page. Removed; the live one is below. */
+
 
 /* ---------------- on this day in mathematics ---------------- */
 const MATH_HISTORY = [
@@ -4207,20 +4059,25 @@ function resolveFlag(articleId, idx){
 /* ============================================================
    ACCOUNTS & SESSION
 
-   DEMO ONLY. These credentials are hard-coded in the page and
-   checked in the browser: anyone can read them from source.
-   A production build replaces signIn() with a request to an
-   authentication service that verifies the credential and
-   returns a session token.
+   Credentials are no longer held here. signIn() posts to the
+   server, which checks a bcrypt hash and sets an HttpOnly
+   session cookie; nothing in this page can verify a password
+   and nothing here should carry one.
+
+   What remains is the display metadata the page reads when it
+   has only a name to work with — the role and credential shown
+   beside an author. The same fields arrive from the database in
+   USERS, so these entries are a fallback for the seeded names
+   and are filled from USERS once bootstrap has run.
    ============================================================ */
 const ACCOUNTS = [
-  { username:'reader',      password:'reader123',  role:'visitor',
+  { username:'reader',      role:'visitor',
     name:'Guest Reader',      credential:null },
-  { username:'contributor', password:'contrib123', role:'contributor',
+  { username:'contributor', role:'contributor',
     name:'R. Fennimore',      credential:'Ph.D. Candidate in Algebra' },
-  { username:'reviewer',    password:'review123',  role:'reviewer',
+  { username:'reviewer',    role:'reviewer',
     name:'Dr. K. Bergström',  credential:'Ph.D. in Analysis — Senior Reviewer' },
-  { username:'admin',       password:'admin123',   role:'admin',
+  { username:'admin',       role:'admin',
     name:'Dr. P. Odusanya',   credential:'Platform Administrator' },
 ];
 const GUEST = { name:'Guest Reader', credential:null, role:'visitor', username:null };
@@ -4364,69 +4221,8 @@ function nextUserId(){
   return USERS.reduce((max, u) => Math.max(max, u.id), 0) + 1;
 }
 
-function submitRegistration(){
-  const name = document.getElementById('reg-name').value.trim();
-  const username = document.getElementById('reg-username').value.trim().toLowerCase();
-  const pass = document.getElementById('reg-pass').value;
-  const passConfirm = document.getElementById('reg-pass-confirm').value;
-  const credential = document.getElementById('reg-credential').value.trim();
-  const agreedCredential = document.getElementById('reg-agree-credential').checked;
-  const agreedAge = document.getElementById('reg-agree-age').checked;
-  const isInviteRole = registerRoleChoice === 'reviewer' || registerRoleChoice === 'admin';
+/* submitRegistration: an earlier definition stood here — replaced by the AuthService version; never reached. Removed; the live one is below. */
 
-  if(!name){ registerError('Enter your full name.'); return; }
-  if(!/^[a-z0-9_]{3,20}$/.test(username)){ registerError('Username must be 3–20 characters: letters, numbers, and underscores only.'); return; }
-  if(accountByUsername(username)){ registerError('That username is already taken.'); return; }
-  if(pass.length < 8){ registerError('Password must be at least 8 characters.'); return; }
-  if(!/[^A-Za-z0-9]/.test(pass)){ registerError('Please add a special symbol to your password — for example ! @ # $ % & * ? _ or -'); return; }
-  if(pass !== passConfirm){ registerError('Passwords do not match.'); return; }
-  if(registerRoleChoice === 'contributor'){
-    if(!credential){ registerError('Enter the credential that qualifies you to contribute.'); return; }
-    if(!agreedCredential){ registerError('Confirm your credential statement is accurate.'); return; }
-  }
-  let inviteMatch = null;
-  if(isInviteRole){
-    inviteMatch = INVITE_CODES.find(c => c.code === selectedInviteCode && c.role === registerRoleChoice && !c.used);
-    if(!inviteMatch){ registerError('Your invitation code is no longer valid — re-enter it before submitting.'); return; }
-  }
-  if(!agreedAge){ registerError('Confirm you meet the age and one-account-per-person requirement.'); return; }
-
-  const finalRole = isInviteRole ? registerRoleChoice : 'visitor';
-  const finalCredential = registerRoleChoice === 'contributor' ? credential
-    : isInviteRole ? `${roleLabel(registerRoleChoice)} — invitation verified`
-    : null;
-
-  const account = {
-    username, password:pass, role:finalRole, name, credential:finalCredential,
-    requestedRole: registerRoleChoice,
-  };
-  ACCOUNTS.push(account);
-
-  if(registerRoleChoice === 'contributor'){
-    USERS.push({ id: nextUserId(), name, credential, role:'pending', verified:false, active:true });
-  }
-  if(isInviteRole){
-    inviteMatch.used = true;
-    inviteMatch.usedBy = name;
-    USERS.push({ id: nextUserId(), name, credential:finalCredential, role:registerRoleChoice, verified:true, active:true });
-  }
-
-  SESSION = account;
-  CURRENT_ROLE = finalRole;
-  try{ sessionStorage.setItem('mathopedia-session', account.username); }catch(e){}
-  renderAccount();
-  renderNotifBell();
-
-  const target = pendingView || 'home';
-  pendingView = null;
-  showView(target);
-
-  toast(registerRoleChoice === 'contributor'
-    ? `Welcome, ${name}. You can read and bookmark now — your Contributor request is awaiting Administrator verification.`
-    : isInviteRole
-    ? `Welcome, ${name}. Your invitation was verified — you're signed in as ${roleLabel(registerRoleChoice)}.`
-    : `Welcome, ${name}. Your Reader account is ready.`);
-}
 
 function fillLogin(username){
   const acct = accountByUsername(username);
@@ -4442,32 +4238,8 @@ function loginError(msg){
   el.classList.add('show');
 }
 
-function signIn(){
-  const u = document.getElementById('login-user').value;
-  const p = document.getElementById('login-pass').value;
-  const acct = accountByUsername(u);
-  if(!acct || acct.password !== p){
-    loginError('Unrecognised username or password.');
-    return;
-  }
-  // an administrator can suspend an account from the console; honour that here
-  const record = USERS.find(x => x.name === acct.name);
-  if(record && record.active === false){
-    loginError('This account has been suspended by an administrator.');
-    return;
-  }
-  SESSION = acct;
-  CURRENT_ROLE = acct.role;
-  try{ sessionStorage.setItem('mathopedia-session', acct.username); }catch(e){}
-  document.getElementById('login-pass').value = '';
-  document.getElementById('login-error').classList.remove('show');
-  renderAccount();
-  renderNotifBell();
-  const target = pendingView || 'home';
-  pendingView = null;
-  showView(target);
-  toast(`Signed in as ${acct.name} — ${roleLabel(acct.role)}`);
-}
+/* signIn: an earlier definition stood here — replaced by the AuthService version; never reached. Removed; the live one is below. */
+
 
 function signOut(){
   SESSION = null;
@@ -5215,198 +4987,7 @@ window.addEventListener('resize', () => {
    forms the concept's fingerprint, used for recommendations
    and for reviewer-expertise matching.
    ============================================================ */
-const CONCEPTS = [
-  /* --- foundational spine (their example: Sets → Functions → Limits → …) --- */
-  { id:'sets', name:'Sets', kind:'definition', field:'algebra', difficulty:10, abstraction:35,
-    summary:'Collections of distinct objects, and the membership relation on which the rest of mathematics is built.',
-    dna:{algebra:70, analysis:40, geometry:20, topology:60, probability:45} },
-  { id:'functions', name:'Functions', kind:'definition', field:'algebra', difficulty:18, abstraction:40,
-    summary:'An assignment f: A → B giving each element of a domain A exactly one value in a codomain B.',
-    dna:{algebra:75, analysis:70, geometry:40, topology:55, probability:50} },
-  { id:'limits', name:'Limits', kind:'definition', field:'analysis', difficulty:35, abstraction:55,
-    summary:'The value a function approaches as its input approaches a point — the idea that makes calculus rigorous.',
-    dna:{algebra:20, analysis:95, geometry:35, topology:60, probability:30} },
-  { id:'continuity', name:'Continuity', kind:'definition', field:'analysis', difficulty:38, abstraction:55,
-    summary:'A function is continuous where small changes in input produce small changes in output.',
-    dna:{algebra:15, analysis:90, geometry:45, topology:75, probability:25} },
-  { id:'derivatives', name:'Derivatives', kind:'definition', field:'analysis', difficulty:42, abstraction:50,
-    summary:'The instantaneous rate of change of a function, defined as a limit of difference quotients.',
-    dna:{algebra:30, analysis:95, geometry:65, topology:20, probability:25} },
-  { id:'integrals', name:'Integrals', kind:'definition', field:'analysis', difficulty:48, abstraction:55,
-    summary:'The accumulation of a quantity over an interval, defined as a limit of Riemann sums.',
-    dna:{algebra:25, analysis:95, geometry:60, topology:25, probability:55} },
-  { id:'real-analysis', name:'Real Analysis', kind:'field', field:'analysis', difficulty:70, abstraction:80,
-    summary:'The rigorous study of limits, continuity, differentiation and integration on the real line.',
-    dna:{algebra:30, analysis:100, geometry:30, topology:70, probability:40} },
-
-  /* --- complex analysis cluster (their Euler example) --- */
-  { id:'complex-numbers', name:'Complex Numbers', kind:'definition', field:'algebra', difficulty:25, abstraction:45,
-    summary:'Numbers of the form a + bi with i² = −1, forming an algebraically closed field.',
-    dna:{algebra:85, analysis:60, geometry:70, topology:25, probability:10} },
-  { id:'unit-circle', name:'The Unit Circle', kind:'definition', field:'geometry', difficulty:20, abstraction:25,
-    summary:'The circle of radius 1 centred at the origin, on which the trigonometric functions are defined geometrically.',
-    dna:{algebra:35, analysis:55, geometry:95, topology:20, probability:5} },
-  { id:'trigonometric-functions', name:'Trigonometric Functions', kind:'definition', field:'geometry', difficulty:25, abstraction:30,
-    summary:'Sine and cosine as coordinates of a point moving on the unit circle.',
-    dna:{algebra:40, analysis:70, geometry:90, topology:15, probability:10} },
-  { id:'complex-exponentials', name:'Complex Exponentials', kind:'definition', field:'analysis', difficulty:45, abstraction:60,
-    summary:'The exponential function extended to complex arguments via its power series.',
-    dna:{algebra:60, analysis:90, geometry:65, topology:20, probability:15} },
-  { id:'euler-formula', name:"Euler's Formula", kind:'theorem', field:'analysis', difficulty:45, abstraction:55,
-    summary:'e^{ix} = cos x + i sin x — the bridge between exponential and trigonometric functions.',
-    dna:{algebra:55, analysis:90, geometry:75, topology:15, probability:5},
-    timeline:[
-      {year:'1714', text:'Roger Cotes publishes a logarithmic form of the relation, without the exponential notation.'},
-      {year:'1748', text:'Euler states the formula in Introductio in analysin infinitorum and derives it from power series.'},
-      {year:'1799', text:'Wessel and later Argand give the geometric reading as rotation in the plane.'} ] },
-  { id:'periodic-functions', name:'Periodic Functions', kind:'definition', field:'analysis', difficulty:30, abstraction:45,
-    summary:'Functions that repeat their values at regular intervals, f(x + T) = f(x).',
-    dna:{algebra:30, analysis:85, geometry:60, topology:35, probability:20} },
-  { id:'fourier-representation', name:'Fourier Representation', kind:'theorem', field:'analysis', difficulty:65, abstraction:70,
-    summary:'Any sufficiently well-behaved periodic function can be written as a sum of sines and cosines.',
-    dna:{algebra:55, analysis:95, geometry:45, topology:35, probability:40} },
-  { id:'fourier-analysis', name:'Fourier Analysis', kind:'field', field:'analysis', difficulty:75, abstraction:80,
-    summary:'The study of how functions decompose into frequency components.',
-    dna:{algebra:60, analysis:100, geometry:40, topology:45, probability:55} },
-  { id:'fourier-transform', name:'The Fourier Transform', kind:'method', field:'analysis', difficulty:70, abstraction:75,
-    summary:'The integral transform carrying a function of time to a function of frequency.',
-    dna:{algebra:55, analysis:100, geometry:35, topology:40, probability:60} },
-  { id:'complex-analysis', name:'Complex Analysis', kind:'field', field:'analysis', difficulty:78, abstraction:85,
-    summary:'The study of differentiable functions of a complex variable, where differentiability is far more rigid than on the reals.',
-    dna:{algebra:65, analysis:100, geometry:70, topology:60, probability:20} },
-  { id:'analytic-continuation', name:'Analytic Continuation', kind:'method', field:'analysis', difficulty:82, abstraction:88,
-    summary:'Extending a holomorphic function beyond its original domain while preserving analyticity; on a connected domain the extension is unique.',
-    dna:{algebra:50, analysis:100, geometry:45, topology:65, probability:15} },
-
-  /* --- algebra cluster --- */
-  { id:'polynomials', name:'Polynomials', kind:'definition', field:'algebra', difficulty:20, abstraction:35,
-    summary:'Finite sums of powers of a variable with coefficients from a ring or field.',
-    dna:{algebra:95, analysis:45, geometry:40, topology:10, probability:15} },
-  { id:'groups', name:'Groups', kind:'definition', field:'algebra', difficulty:45, abstraction:75,
-    summary:'A set with an associative operation, an identity, and inverses — the algebraic abstraction of symmetry.',
-    dna:{algebra:100, analysis:20, geometry:55, topology:60, probability:15} },
-  { id:'modular-arithmetic', name:'Modular Arithmetic', kind:'definition', field:'numtheory', difficulty:30, abstraction:45,
-    summary:'Arithmetic on remainders, where numbers wrap around after reaching a fixed modulus.',
-    dna:{algebra:80, analysis:5, geometry:15, topology:5, probability:20} },
-  { id:'primes', name:'Prime Numbers', kind:'definition', field:'numtheory', difficulty:15, abstraction:30,
-    summary:'Integers greater than 1 divisible only by 1 and themselves — the multiplicative atoms of the integers.',
-    dna:{algebra:70, analysis:45, geometry:10, topology:5, probability:35} },
-  { id:'zeta-function', name:'The Riemann Zeta Function', kind:'definition', field:'numtheory', difficulty:80, abstraction:85,
-    summary:'ζ(s) = Σ n^{−s}, continued analytically to the whole complex plane except s = 1.',
-    dna:{algebra:55, analysis:95, geometry:25, topology:35, probability:30} },
-  { id:'prime-counting', name:'The Prime Counting Function', kind:'definition', field:'numtheory', difficulty:70, abstraction:70,
-    summary:'π(x), the number of primes not exceeding x, and the question of how smoothly it grows.',
-    dna:{algebra:60, analysis:85, geometry:10, topology:5, probability:45} },
-
-  /* --- geometry & topology cluster --- */
-  { id:'euclidean-geometry', name:'Euclidean Geometry', kind:'field', field:'geometry', difficulty:20, abstraction:30,
-    summary:'The geometry of flat space governed by Euclid’s five postulates.',
-    dna:{algebra:35, analysis:20, geometry:100, topology:35, probability:5} },
-  { id:'inner-product', name:'Inner Product Spaces', kind:'definition', field:'algebra', difficulty:50, abstraction:70,
-    summary:'Vector spaces carrying a notion of angle and length, generalising the dot product.',
-    dna:{algebra:90, analysis:65, geometry:80, topology:35, probability:30} },
-  { id:'vector-fields', name:'Vector Fields', kind:'definition', field:'topology', difficulty:55, abstraction:60,
-    summary:'An assignment of a vector to every point of a space — the objects that flow, circulate and diverge.',
-    dna:{algebra:45, analysis:75, geometry:85, topology:70, probability:10} },
-  { id:'differential-forms', name:'Differential Forms', kind:'definition', field:'topology', difficulty:80, abstraction:90,
-    summary:'Objects built to be integrated over curves, surfaces and higher-dimensional regions.',
-    dna:{algebra:60, analysis:80, geometry:85, topology:95, probability:5} },
-  { id:'manifolds', name:'Manifolds', kind:'definition', field:'topology', difficulty:75, abstraction:88,
-    summary:'Spaces that look locally like Euclidean space, on which calculus can still be done.',
-    dna:{algebra:45, analysis:70, geometry:85, topology:100, probability:5} },
-  { id:'planar-graphs', name:'Planar Graphs', kind:'definition', field:'combinatorics', difficulty:40, abstraction:50,
-    summary:'Graphs that can be drawn in the plane without edges crossing.',
-    dna:{algebra:45, analysis:5, geometry:65, topology:80, probability:20} },
-
-  /* --- probability cluster --- */
-  { id:'probability-space', name:'Probability Spaces', kind:'definition', field:'probability', difficulty:40, abstraction:65,
-    summary:'A sample space, a σ-algebra of events, and a measure assigning each event a probability.',
-    dna:{algebra:35, analysis:70, geometry:10, topology:45, probability:100} },
-  { id:'random-variables', name:'Random Variables', kind:'definition', field:'probability', difficulty:42, abstraction:60,
-    summary:'Measurable functions from a probability space to the reals.',
-    dna:{algebra:40, analysis:70, geometry:15, topology:35, probability:100} },
-  { id:'conditional-probability', name:'Conditional Probability', kind:'definition', field:'probability', difficulty:30, abstraction:45,
-    summary:'The probability of one event given that another has occurred: P(A|B) = P(A∩B)/P(B), defined whenever P(B) > 0.',
-    dna:{algebra:30, analysis:35, geometry:10, topology:10, probability:100} },
-  { id:'independence', name:'Independence', kind:'definition', field:'probability', difficulty:32, abstraction:50,
-    summary:'Events or variables whose joint behaviour factorises into their separate behaviours.',
-    dna:{algebra:30, analysis:40, geometry:5, topology:10, probability:100} },
-  { id:'expectation', name:'Expectation & Variance', kind:'definition', field:'probability', difficulty:38, abstraction:50,
-    summary:'The mean of a random variable and the average squared spread about that mean.',
-    dna:{algebra:35, analysis:65, geometry:15, topology:10, probability:100} },
-  { id:'normal-distribution', name:'The Normal Distribution', kind:'definition', field:'probability', difficulty:35, abstraction:45,
-    summary:'The bell-shaped density determined entirely by its mean and variance.',
-    dna:{algebra:25, analysis:70, geometry:35, topology:5, probability:100} },
-
-  /* --- application domains (kind:'application') --- */
-  { id:'signal-processing', name:'Signal Processing', kind:'application', field:'analysis', difficulty:60, abstraction:40,
-    summary:'Filtering, sampling and reconstructing signals — an engineering discipline resting on frequency decomposition.',
-    dna:{algebra:45, analysis:85, geometry:25, topology:15, probability:55} },
-  { id:'medical-imaging', name:'Medical Imaging', kind:'application', field:'analysis', difficulty:65, abstraction:35,
-    summary:'Reconstructing an interior image from exterior measurements, as in CT and MRI.',
-    dna:{algebra:40, analysis:85, geometry:60, topology:20, probability:50} },
-  { id:'audio-compression', name:'Audio Compression', kind:'application', field:'analysis', difficulty:55, abstraction:30,
-    summary:'Discarding frequency components the ear cannot resolve, as in MP3 and AAC.',
-    dna:{algebra:35, analysis:80, geometry:10, topology:10, probability:45} },
-  { id:'quantum-mechanics', name:'Quantum Mechanics', kind:'application', field:'analysis', difficulty:85, abstraction:70,
-    summary:'Physical states as unit vectors in a complex Hilbert space, evolving under a one-parameter unitary group generated by the Hamiltonian.',
-    dna:{algebra:70, analysis:90, geometry:55, topology:45, probability:80} },
-  { id:'cryptography', name:'Cryptography', kind:'application', field:'numtheory', difficulty:60, abstraction:45,
-    summary:'Protecting information using problems that are easy to state and hard to invert.',
-    dna:{algebra:85, analysis:20, geometry:10, topology:5, probability:55} },
-  { id:'statistical-inference', name:'Statistical Inference', kind:'application', field:'probability', difficulty:50, abstraction:45,
-    summary:'Drawing conclusions about a population from a finite sample, with quantified uncertainty.',
-    dna:{algebra:30, analysis:55, geometry:10, topology:5, probability:95} },
-  { id:'machine-learning', name:'Machine Learning', kind:'application', field:'probability', difficulty:60, abstraction:50,
-    summary:'Fitting predictive models to data by optimising a loss function.',
-    dna:{algebra:70, analysis:70, geometry:45, topology:20, probability:85} },
-  { id:'computer-graphics', name:'Computer Graphics', kind:'application', field:'geometry', difficulty:50, abstraction:35,
-    summary:'Representing and rendering geometry, motion and light.',
-    dna:{algebra:75, analysis:50, geometry:95, topology:25, probability:30} },
-  { id:'gps-navigation', name:'Satellite Navigation', kind:'application', field:'geometry', difficulty:45, abstraction:25,
-    summary:'Locating a receiver by intersecting distance spheres from several satellites.',
-    dna:{algebra:55, analysis:40, geometry:90, topology:10, probability:35} },
-
-  /* --- concepts that already have articles (ids match the article ids) --- */
-  { id:'euler-identity', name:"Euler's Identity", kind:'theorem', field:'analysis', difficulty:50, abstraction:55,
-    summary:'e^{iπ} + 1 = 0, linking five fundamental constants in one equation.',
-    dna:{algebra:55, analysis:90, geometry:70, topology:15, probability:5},
-    timeline:[
-      {year:'1748', text:'Euler publishes the general formula from which the identity is the special case x = π.'},
-      {year:'1800s', text:'The Argand-plane reading makes the identity a statement about a half-turn rotation.'},
-      {year:'1988', text:'Readers of the Mathematical Intelligencer vote it the most beautiful theorem in mathematics.'} ] },
-  { id:'ftc', name:'The Fundamental Theorem of Calculus', kind:'theorem', field:'analysis', difficulty:50, abstraction:55,
-    summary:'For a continuous integrand, differentiation and integration are mutually inverse operations.',
-    dna:{algebra:30, analysis:100, geometry:60, topology:25, probability:30} },
-  { id:'fta', name:'The Fundamental Theorem of Algebra', kind:'theorem', field:'algebra', difficulty:60, abstraction:65,
-    summary:'Every non-constant complex polynomial has a complex root.',
-    dna:{algebra:100, analysis:70, geometry:50, topology:60, probability:5} },
-  { id:'riemann-hypothesis', name:'The Riemann Hypothesis', kind:'theorem', field:'numtheory', difficulty:95, abstraction:95,
-    summary:'All non-trivial zeros of the zeta function are conjectured to lie on the line Re(s) = ½.',
-    dna:{algebra:60, analysis:95, geometry:25, topology:35, probability:45} },
-  { id:'stokes-theorem', name:"Stokes' Theorem", kind:'theorem', field:'topology', difficulty:78, abstraction:85,
-    summary:'The integral of a form over a boundary equals the integral of its derivative over the region.',
-    dna:{algebra:50, analysis:85, geometry:80, topology:95, probability:5} },
-  { id:'bayes-theorem', name:"Bayes' Theorem", kind:'theorem', field:'probability', difficulty:35, abstraction:45,
-    summary:'How to update the probability of a hypothesis in the light of evidence.',
-    dna:{algebra:30, analysis:35, geometry:5, topology:5, probability:100} },
-  { id:'clt', name:'The Central Limit Theorem', kind:'theorem', field:'probability', difficulty:55, abstraction:60,
-    summary:'Standardised sums of independent, identically distributed variables with finite non-zero variance converge in distribution to the standard normal.',
-    dna:{algebra:30, analysis:80, geometry:20, topology:15, probability:100} },
-  { id:'pythagorean', name:'The Pythagorean Theorem', kind:'theorem', field:'geometry', difficulty:12, abstraction:20,
-    summary:'In a right triangle, a² + b² = c².',
-    dna:{algebra:55, analysis:15, geometry:100, topology:10, probability:5},
-    timeline:[
-      {year:'c. 1800 BC', text:'Babylonian tablet Plimpton 322 lists Pythagorean triples.'},
-      {year:'c. 500 BC', text:'The result is attributed to Pythagoras and his school.'},
-      {year:'c. 300 BC', text:"Euclid gives a rigorous proof as Proposition I.47 of the Elements."} ] },
-  { id:'fermat-little', name:"Fermat's Little Theorem", kind:'theorem', field:'numtheory', difficulty:40, abstraction:50,
-    summary:'For prime p and a not divisible by p, a^{p−1} ≡ 1 (mod p).',
-    dna:{algebra:85, analysis:5, geometry:5, topology:5, probability:15} },
-  { id:'euler-polyhedron', name:"Euler's Polyhedron Formula", kind:'theorem', field:'combinatorics', difficulty:35, abstraction:55,
-    summary:'For a convex polyhedron, V − E + F = 2.',
-    dna:{algebra:40, analysis:5, geometry:75, topology:90, probability:5} },
-];
+const CONCEPTS = [];
 
 /* ============================================================
    EDGES — relationships are data, and every relationship
@@ -5420,188 +5001,7 @@ const CONCEPTS = [
    why:   the reasoning behind the connection
    chain: optional intermediate steps, shown as a derivation path
    ============================================================ */
-const EDGES = [
-  /* foundational spine */
-  {from:'sets', to:'functions', type:'prerequisite',
-   why:'A function is defined as a particular kind of relation between two sets — a subset of the Cartesian product in which every input appears exactly once. Without sets there is nothing for a function to map between.'},
-  {from:'functions', to:'limits', type:'prerequisite',
-   why:'A limit is a statement about the values a function takes near a point, so the function must be defined on a neighbourhood of that point before the limit can be asked about.'},
-  {from:'limits', to:'continuity', type:'prerequisite',
-   why:'Continuity at a point is literally the statement that the limit of f as x → a exists and equals f(a). It is a limit condition, not an independent idea.'},
-  {from:'limits', to:'derivatives', type:'prerequisite',
-   why:'The derivative is defined as the limit of the difference quotient (f(x+h) − f(x))/h as h → 0. The whole content of differentiation is that this particular limit exists.'},
-  {from:'limits', to:'integrals', type:'prerequisite',
-   why:'The Riemann integral is the limit of sums over partitions as the mesh goes to zero; existence of the integral is existence of that limit.'},
-  {from:'continuity', to:'integrals', type:'prerequisite',
-   why:'Continuity on a closed bounded interval is the standard sufficient condition for Riemann integrability, and it is what lets the accumulation function be differentiated later.'},
-  {from:'derivatives', to:'ftc', type:'prerequisite',
-   why:'The theorem asserts that the accumulation function has a derivative, and that it equals the integrand. Half the statement is a derivative claim.'},
-  {from:'integrals', to:'ftc', type:'prerequisite',
-   why:'The theorem is about the integral of a derivative and the derivative of an integral, so the integral must already be defined for the statement to make sense.'},
-  {from:'ftc', to:'real-analysis', type:'prerequisite',
-   why:'Real analysis begins by asking exactly when the fundamental theorem holds: which functions are integrable, which derivatives are themselves integrable, and where the naive statement fails.'},
-  {from:'real-analysis', to:'complex-analysis', type:'prerequisite',
-   why:'Complex analysis reuses the machinery of limits, convergence and uniform convergence from the real theory, then discovers that complex differentiability is a far stronger hypothesis than real differentiability.'},
-
-  /* the Euler cluster — their worked example */
-  {from:'complex-numbers', to:'euler-formula', type:'prerequisite',
-   why:'The formula is an identity about e raised to an imaginary power, so the field in which i lives has to exist first, together with its arithmetic.'},
-  {from:'complex-numbers', to:'euler-identity', type:'prerequisite',
-   why:'The identity is a statement in the complex field: it involves i as an exponent and asserts equality with the complex number 0.'},
-  {from:'euler-formula', to:'euler-identity', type:'prerequisite',
-   why:'The identity is exactly Euler’s formula evaluated at x = π: cos π = −1 and sin π = 0 give e^{iπ} = −1, and rearranging produces e^{iπ} + 1 = 0.'},
-  {from:'complex-exponentials', to:'euler-formula', type:'prerequisite',
-   why:'Substituting ix into the power series for the exponential and separating real and imaginary parts produces precisely the cosine and sine series — which is the proof of the formula.'},
-  {from:'trigonometric-functions', to:'euler-formula', type:'prerequisite',
-   why:'The right-hand side of the formula is cos x + i sin x, so the trigonometric functions must be defined — and defined as functions of a real number, not of an angle in degrees — before the identity can be stated.'},
-  {from:'unit-circle', to:'trigonometric-functions', type:'prerequisite',
-   why:'Sine and cosine are defined as the vertical and horizontal coordinates of a point travelling around the unit circle at unit speed; the circle is where their values come from.'},
-  {from:'euler-identity', to:'unit-circle', type:'related',
-   why:'The identity is the unit circle read algebraically: e^{iθ} traces the circle as θ runs over the reals, and θ = π is the half-turn that lands on −1. The equation and the picture are the same statement.'},
-  {from:'euler-identity', to:'complex-exponentials', type:'related',
-   why:'The identity is the single most-quoted value of the complex exponential, and it is the case that fixes the exponential’s period: e^{iθ} has period 2π precisely because e^{iπ} = −1.'},
-  {from:'euler-formula', to:'complex-analysis', type:'prerequisite',
-   why:'Writing complex numbers as re^{iθ} turns multiplication into addition of angles, which is the computational basis of contour integration and the residue calculus.'},
-  {from:'euler-identity', to:'fourier-analysis', type:'prerequisite',
-   why:'Fourier analysis is built on the complex exponentials e^{inx}, whose orthogonality and periodicity are consequences of Euler’s relation.',
-   chain:['Complex exponentials','Periodic functions','Fourier representation','Fourier analysis']},
-  {from:'complex-exponentials', to:'periodic-functions', type:'prerequisite',
-   why:'e^{iθ} is periodic with period 2π, so it is the natural model of a pure oscillation — a periodic function with a single frequency and no other structure.'},
-  {from:'periodic-functions', to:'fourier-representation', type:'prerequisite',
-   why:'The Fourier series expands a periodic function in terms of other periodic functions; periodicity is what makes the expansion well posed on a bounded interval.'},
-  {from:'fourier-representation', to:'fourier-analysis', type:'prerequisite',
-   why:'Fourier analysis is the study of when that representation converges, in what sense, and what the coefficients tell you about the original function.'},
-  {from:'fourier-representation', to:'fourier-transform', type:'prerequisite',
-   why:'Letting the period tend to infinity turns the discrete sum of Fourier coefficients into a continuous integral — the transform is the limiting case of the series.'},
-  {from:'integrals', to:'fourier-transform', type:'prerequisite',
-   why:'The transform is defined by an integral against e^{−iωt}; convergence questions about that integral are exactly what makes the theory delicate.'},
-
-  /* algebra cluster */
-  {from:'polynomials', to:'fta', type:'prerequisite',
-   why:'The theorem is a statement about the roots of polynomials, so the objects and their degree must be defined before the claim can be made.'},
-  {from:'complex-numbers', to:'fta', type:'prerequisite',
-   why:'The theorem says the complex field is algebraically closed — it is a statement about ℂ, and it is false over ℝ, as x² + 1 shows.'},
-  {from:'fta', to:'complex-analysis', type:'related',
-   why:'The shortest proof of the theorem is complex-analytic: if a polynomial had no root, 1/p would be a bounded entire function and Liouville’s theorem would force it to be constant.'},
-  {from:'sets', to:'groups', type:'prerequisite',
-   why:'A group is a set carrying an operation, so the underlying collection has to exist before the structure can be imposed.'},
-  {from:'groups', to:'modular-arithmetic', type:'related',
-   why:'The integers mod n form a group under addition and, when n is prime, the non-zero residues form a group under multiplication — modular arithmetic is the first non-obvious example most students meet.'},
-  {from:'modular-arithmetic', to:'fermat-little', type:'prerequisite',
-   why:'The theorem is stated as a congruence mod p; without the congruence relation there is no way to express it.'},
-  {from:'primes', to:'fermat-little', type:'prerequisite',
-   why:'The result is false for composite moduli in general — primality is what makes the non-zero residues a group, which is what forces a^{p−1} ≡ 1.'},
-  {from:'groups', to:'fermat-little', type:'related',
-   why:'The theorem is Lagrange’s theorem in disguise: the multiplicative group mod p has order p − 1, so every element’s order divides p − 1.'},
-  {from:'fermat-little', to:'cryptography', type:'application',
-   why:'RSA decryption works because exponentiation mod n is invertible, and the exponent that inverts it is computed from Fermat’s theorem generalised by Euler’s totient.'},
-  {from:'modular-arithmetic', to:'cryptography', type:'application',
-   why:'Public-key schemes rely on operations that are cheap in one direction and expensive to reverse; modular exponentiation is the standard example.'},
-
-  /* number theory / zeta cluster */
-  {from:'primes', to:'prime-counting', type:'prerequisite',
-   why:'π(x) counts primes, so the objects being counted must be defined first.'},
-  {from:'primes', to:'zeta-function', type:'prerequisite',
-   why:'Euler’s product formula rewrites ζ(s) as a product over primes, which is why an analytic function of a complex variable knows anything about the integers at all.'},
-  {from:'complex-analysis', to:'zeta-function', type:'prerequisite',
-   why:'The series Σ n^{−s} converges only for Re(s) > 1; everything interesting about ζ lives on the rest of the plane and requires complex-analytic tools to reach.'},
-  {from:'analytic-continuation', to:'zeta-function', type:'prerequisite',
-   why:'The zeros that the Riemann hypothesis is about lie in the critical strip, where the defining series diverges — they exist only on the continued function.'},
-  {from:'complex-analysis', to:'analytic-continuation', type:'prerequisite',
-   why:'Uniqueness of the continuation follows from the identity theorem, which is a complex-analytic fact with no real-variable analogue.'},
-  {from:'zeta-function', to:'riemann-hypothesis', type:'prerequisite',
-   why:'The hypothesis is a statement about the location of the zeros of ζ, so the function and its continuation must exist before the conjecture can be posed.'},
-  {from:'prime-counting', to:'riemann-hypothesis', type:'related',
-   why:'The hypothesis is equivalent to a sharp error bound in the prime number theorem: π(x) = Li(x) + O(√x log x). The zeros control how far the primes stray from their average density.'},
-  {from:'riemann-hypothesis', to:'cryptography', type:'application',
-   why:'Bounds on prime gaps that follow from the hypothesis underpin the running-time analysis of prime-generation algorithms used to produce cryptographic keys.'},
-
-  /* geometry / topology cluster */
-  {from:'euclidean-geometry', to:'pythagorean', type:'prerequisite',
-   why:'The theorem is a proposition of Euclidean geometry and fails in curved space; the parallel postulate is what makes it true.'},
-  {from:'pythagorean', to:'unit-circle', type:'prerequisite',
-   why:'The equation of the unit circle, x² + y² = 1, is the Pythagorean theorem applied to the radius — which is why cos²θ + sin²θ = 1.'},
-  {from:'pythagorean', to:'inner-product', type:'prerequisite',
-   why:'The inner product is built so that ⟨v,v⟩ is the squared length; the Pythagorean relation becomes the statement that orthogonal vectors add in quadrature.'},
-  {from:'inner-product', to:'fourier-representation', type:'prerequisite',
-   why:'Fourier coefficients are inner products of the function with the basis exponentials; convergence of the series is a statement about an orthonormal basis of a function space.'},
-  {from:'pythagorean', to:'gps-navigation', type:'application',
-   why:'A receiver solves for its position by intersecting spheres of known radius about each satellite, and the distance equation for those spheres is the Pythagorean relation in three dimensions.'},
-  {from:'pythagorean', to:'computer-graphics', type:'application',
-   why:'Distance tests, normalisation of direction vectors and lighting calculations all reduce to computing √(x² + y² + z²).'},
-  {from:'vector-fields', to:'stokes-theorem', type:'prerequisite',
-   why:'The classical statement equates the circulation of a vector field around a closed curve with the flux of its curl through any surface the curve bounds.'},
-  {from:'differential-forms', to:'stokes-theorem', type:'prerequisite',
-   why:'The general theorem, ∫_∂M ω = ∫_M dω, is stated for forms; the gradient, curl and divergence theorems are the cases of degree 0, 1 and 2.'},
-  {from:'manifolds', to:'stokes-theorem', type:'prerequisite',
-   why:'The theorem needs a region with a boundary and a consistent orientation, which is exactly the structure a manifold with boundary provides.'},
-  {from:'integrals', to:'stokes-theorem', type:'prerequisite',
-   why:'Both sides of the identity are integrals; the theorem is a statement about when integration and differentiation can be traded against each other in higher dimensions.'},
-  {from:'ftc', to:'stokes-theorem', type:'alternative',
-   why:'The fundamental theorem of calculus is Stokes’ theorem in one dimension: the boundary of the interval [a,b] is the two points a and b, and ∫_a^b f′ = f(b) − f(a) is ∫_∂M ω = ∫_M dω.'},
-  {from:'manifolds', to:'quantum-mechanics', type:'application',
-   why:'Configuration spaces of constrained physical systems are manifolds, and the phase conventions of quantum states are described by bundles over them.'},
-  {from:'planar-graphs', to:'euler-polyhedron', type:'prerequisite',
-   why:'The standard proof projects the polyhedron onto the plane to get a connected planar graph, then removes edges one at a time; V − E + F is invariant under each removal.'},
-  {from:'euler-polyhedron', to:'manifolds', type:'prerequisite',
-   why:'V − E + F = 2 is the first appearance of the Euler characteristic, a topological invariant that classifies surfaces: 2 for the sphere, 0 for the torus.'},
-  {from:'euler-polyhedron', to:'euclidean-geometry', type:'related',
-   why:'The formula constrains which regular polyhedra can exist: solving V − E + F = 2 for regular faces meeting regularly at each vertex yields exactly the five Platonic solids.'},
-
-  /* probability cluster */
-  {from:'sets', to:'probability-space', type:'prerequisite',
-   why:'Events are sets, and the axioms of probability are stated for a σ-algebra of subsets of the sample space.'},
-  {from:'probability-space', to:'random-variables', type:'prerequisite',
-   why:'A random variable is a measurable function on a probability space, so the space and its σ-algebra come first.'},
-  {from:'probability-space', to:'conditional-probability', type:'prerequisite',
-   why:'Conditioning restricts the sample space to B and renormalises the measure; it is an operation on a probability space, not a new axiom.'},
-  {from:'conditional-probability', to:'bayes-theorem', type:'prerequisite',
-   why:'The theorem is an immediate rearrangement of the definition: both P(A|B)P(B) and P(B|A)P(A) equal P(A∩B), so the two conditionals determine each other.'},
-  {from:'conditional-probability', to:'independence', type:'prerequisite',
-   why:'Independence is the case where conditioning changes nothing: P(A|B) = P(A), equivalently P(A∩B) = P(A)P(B).'},
-  {from:'random-variables', to:'expectation', type:'prerequisite',
-   why:'Expectation is the integral of a random variable against the probability measure, so the variable must be defined and measurable first.'},
-  {from:'expectation', to:'normal-distribution', type:'prerequisite',
-   why:'The normal distribution is parameterised entirely by its mean and variance, so both moments must be defined for the family to be described.'},
-  {from:'integrals', to:'expectation', type:'prerequisite',
-   why:'For a continuous random variable the expectation is ∫ x f(x) dx; the integral is what makes an average over a continuum meaningful.'},
-  {from:'independence', to:'clt', type:'prerequisite',
-   why:'The theorem’s hypothesis is that the summands are independent — without it the fluctuations can reinforce and the limit fails.'},
-  {from:'expectation', to:'clt', type:'prerequisite',
-   why:'The statement is about the standardised sum (S_n − nμ)/(σ√n), so finite mean and variance are needed even to write it down.'},
-  {from:'normal-distribution', to:'clt', type:'prerequisite',
-   why:'The normal law is the limit the theorem identifies; it has to be defined before the convergence can be stated.'},
-  {from:'clt', to:'statistical-inference', type:'application',
-   why:'Confidence intervals and z-tests use the normal approximation to the sampling distribution of the mean, which is exactly what the theorem licenses for large samples.'},
-  {from:'bayes-theorem', to:'machine-learning', type:'application',
-   why:'Naive Bayes classifiers, Bayesian networks and posterior inference all compute P(hypothesis | data) from P(data | hypothesis) by the theorem.'},
-  {from:'bayes-theorem', to:'statistical-inference', type:'application',
-   why:'Bayesian inference treats parameters as random and updates a prior into a posterior; the update rule is the theorem.'},
-  {from:'bayes-theorem', to:'medical-imaging', type:'application',
-   why:'Iterative reconstruction algorithms treat the image as an unknown to be estimated from noisy projections, maximising a posterior probability.'},
-  {from:'clt', to:'normal-distribution', type:'related',
-   why:'The theorem explains why the normal distribution is ubiquitous in practice: any quantity that is the accumulation of many small independent effects inherits it.'},
-
-  /* Fourier applications — applications as navigable relationships */
-  {from:'fourier-transform', to:'signal-processing', type:'application',
-   why:'Filtering is multiplication in the frequency domain: transform the signal, scale the components you want to keep or suppress, transform back.'},
-  {from:'fourier-transform', to:'medical-imaging', type:'application',
-   why:'An MRI scanner measures samples of the Fourier transform of the tissue directly; the image is produced by inverting the transform.'},
-  {from:'fourier-transform', to:'audio-compression', type:'application',
-   why:'MP3 encoding transforms short windows of audio into frequency components and discards those a listener cannot perceive, which is only possible in the frequency representation.'},
-  {from:'fourier-analysis', to:'quantum-mechanics', type:'application',
-   why:'Position and momentum wavefunctions are Fourier transforms of one another, and the uncertainty principle is the statement that a function and its transform cannot both be sharply localised.'},
-  {from:'euler-identity', to:'quantum-mechanics', type:'application',
-   why:'The time evolution of a stationary state is multiplication by the phase e^{−iEt/ħ}; the periodicity of that phase — and hence energy quantisation on closed systems — is Euler’s relation at work.'},
-  {from:'euler-formula', to:'signal-processing', type:'application',
-   why:'Representing a sinusoid as the real part of a complex exponential turns tedious trigonometric identities into ordinary algebra with exponents, which is how phase and amplitude are handled in practice.'},
-  {from:'inner-product', to:'machine-learning', type:'application',
-   why:'Linear models score an example by an inner product with a weight vector, and kernel methods replace that product with an inner product in a higher-dimensional space.'},
-  {from:'derivatives', to:'machine-learning', type:'application',
-   why:'Training minimises a loss by gradient descent; backpropagation is the chain rule applied to a composition of many functions.'},
-  {from:'ftc', to:'derivatives', type:'related',
-   why:'The theorem is what makes differentiation practically useful in reverse: to integrate a function you look for something whose derivative it is.'},
-];
+const EDGES = [];
 
 /* ============================================================
    GRAPH LAYER — everything below is derived, never stored
@@ -6565,94 +5965,7 @@ function renderLearningPath(cid){
    render time and the index is recovered, so no answer key can drift out of
    step with its options.
    ========================================================================== */
-const MATH_QUESTIONS = {
-  derivatives: [
-    { q:'If \\(f(x)=x^{3}-4x\\), what is \\(f\'(2)\\)?',
-      options:['8','12','4','20'], answer:'8',
-      explain:'\\(f\'(x)=3x^{2}-4\\), so \\(f\'(2)=3(4)-4=8\\). Choosing 12 differentiates only the cubic term; choosing 4 evaluates \\(f\'\\) at \\(x=\\sqrt{8/3}\\) by mistake.' },
-    { q:'Which rule gives \\(\\frac{d}{dx}\\big[u(x)v(x)\\big]\\)?',
-      options:['\\(u\'v+uv\'\\)','\\(u\'v\'\\)','\\(u\'v-uv\'\\)','\\(\\dfrac{u\'v-uv\'}{v^{2}}\\)'],
-      answer:'\\(u\'v+uv\'\\)',
-      explain:'The product rule. \\(u\'v\'\\) is the common error of differentiating factor by factor; the last option is the quotient rule.' },
-  ],
-  integrals: [
-    { q:'Evaluate \\(\\displaystyle\\int_{1}^{3} 2x\\,dx\\).',
-      options:['8','9','4','10'], answer:'8',
-      explain:'An antiderivative of \\(2x\\) is \\(x^{2}\\), so the integral is \\(3^{2}-1^{2}=9-1=8\\). Answering 9 forgets to subtract the value at the lower limit.' },
-  ],
-  limits: [
-    { q:'Evaluate \\(\\displaystyle\\lim_{x\\to 0}\\frac{\\sin x}{x}\\).',
-      options:['\\(1\\)','\\(0\\)','Does not exist','\\(\\infty\\)'], answer:'\\(1\\)',
-      explain:'A standard limit, provable from the squeeze theorem. Substitution gives the indeterminate form \\(0/0\\), which is why the limit is not simply \\(0\\).' },
-  ],
-  'complex-numbers': [
-    { q:'What is \\(i^{3}\\)?',
-      options:['\\(-i\\)','\\(i\\)','\\(-1\\)','\\(1\\)'], answer:'\\(-i\\)',
-      explain:'\\(i^{2}=-1\\), so \\(i^{3}=i^{2}\\cdot i=-i\\). The powers of \\(i\\) cycle with period four: \\(i, -1, -i, 1\\).' },
-  ],
-  sets: [
-    { q:'If \\(|A|=4\\), how many subsets does \\(A\\) have?',
-      options:['16','8','4','24'], answer:'16',
-      explain:'Each element is either in or out of a subset independently, giving \\(2^{4}=16\\). This counts the empty set and \\(A\\) itself. 24 is \\(4!\\), which counts orderings, not subsets.' },
-  ],
-  'modular-arithmetic': [
-    { q:'Compute \\(2^{10} \\bmod 11\\).',
-      options:['1','2','10','5'], answer:'1',
-      explain:'\\(11\\) is prime and \\(11 \\nmid 2\\), so Fermat\u2019s little theorem gives \\(2^{10}\\equiv 1 \\pmod{11}\\). Directly: \\(1024 = 93\\times 11 + 1\\).' },
-  ],
-  'probability-space': [
-    { q:'Two fair coins are tossed. What is the probability of exactly one head?',
-      options:['\\(\\tfrac12\\)','\\(\\tfrac14\\)','\\(\\tfrac34\\)','\\(\\tfrac13\\)'], answer:'\\(\\tfrac12\\)',
-      explain:'The equally likely outcomes are HH, HT, TH, TT. Two of the four have exactly one head, so the probability is \\(2/4=1/2\\). Answering \\(1/3\\) treats "0, 1 or 2 heads" as equally likely, which they are not.' },
-  ],
-  'bayes-theorem': [
-    { q:'A disease affects \\(1\\%\\) of a population. A test detects it in \\(99\\%\\) of those who have it and gives a false positive in \\(5\\%\\) of those who do not. Given a positive result, what is the probability the person has the disease?',
-      options:['About \\(17\\%\\)','About \\(99\\%\\)','About \\(95\\%\\)','About \\(50\\%\\)'], answer:'About \\(17\\%\\)',
-      explain:'\\(P(D\\mid+)=\\dfrac{(0.99)(0.01)}{(0.99)(0.01)+(0.05)(0.99)}=\\dfrac{0.0099}{0.0594}=\\tfrac16\\approx 16.7\\%\\). Answering \\(99\\%\\) confuses \\(P(+\\mid D)\\) with \\(P(D\\mid +)\\) \u2014 the base rate dominates because healthy people vastly outnumber sick ones.' },
-  ],
-  determinant: [
-    { q:'What is \\(\\det\\begin{pmatrix} 3 & 1 \\\\ 2 & 4\\end{pmatrix}\\)?',
-      options:['10','14','12','11'], answer:'10',
-      explain:'For a \\(2\\times 2\\) matrix the determinant is \\(ad-bc = (3)(4)-(1)(2)=10\\). Answering 14 adds the products instead of subtracting.' },
-  ],
-  eigenvalues: [
-    { q:'What are the eigenvalues of \\(\\begin{pmatrix} 2 & 0 \\\\ 0 & 5\\end{pmatrix}\\)?',
-      options:['\\(2\\) and \\(5\\)','\\(0\\) and \\(7\\)','\\(7\\) and \\(10\\)','\\(-2\\) and \\(-5\\)'],
-      answer:'\\(2\\) and \\(5\\)',
-      explain:'For a diagonal matrix the eigenvalues are the diagonal entries. Here 7 is the trace and 10 the determinant \u2014 the sum and product of the eigenvalues, not the eigenvalues themselves.' },
-  ],
-  matrices: [
-    { q:'For conformable matrices \\(A\\) and \\(B\\), which identity is correct?',
-      options:['\\((AB)^{\\mathsf T}=B^{\\mathsf T}A^{\\mathsf T}\\)','\\((AB)^{\\mathsf T}=A^{\\mathsf T}B^{\\mathsf T}\\)','\\((AB)^{\\mathsf T}=AB\\)','\\((AB)^{\\mathsf T}=BA\\)'],
-      answer:'\\((AB)^{\\mathsf T}=B^{\\mathsf T}A^{\\mathsf T}\\)',
-      explain:'Transposing reverses the order of a product. The shapes alone rule out the second option unless both matrices are square.' },
-  ],
-  primes: [
-    { q:'What is \\(\\gcd(48,180)\\)?',
-      options:['12','6','24','36'], answer:'12',
-      explain:'\\(48=2^{4}\\cdot 3\\) and \\(180=2^{2}\\cdot 3^{2}\\cdot 5\\). The gcd takes the least power of each shared prime: \\(2^{2}\\cdot 3=12\\). Answering 36 takes the greater power of 3 instead of the lesser.' },
-    { q:'Which is the prime factorisation of \\(360\\)?',
-      options:['\\(2^{3}\\cdot 3^{2}\\cdot 5\\)','\\(2^{2}\\cdot 3^{2}\\cdot 10\\)','\\(2^{4}\\cdot 3\\cdot 5\\)','\\(2^{3}\\cdot 3\\cdot 15\\)'],
-      answer:'\\(2^{3}\\cdot 3^{2}\\cdot 5\\)',
-      explain:'\\(360 = 8\\cdot 9\\cdot 5\\). The other options either are not factorisations into primes (10 and 15 are composite) or give the wrong product: \\(2^{4}\\cdot 3\\cdot 5=240\\).' },
-  ],
-  'propositional-logic': [
-    { q:'What is the contrapositive of "if \\(P\\) then \\(Q\\)"?',
-      options:['If \\(\\lnot Q\\) then \\(\\lnot P\\)','If \\(Q\\) then \\(P\\)','If \\(\\lnot P\\) then \\(\\lnot Q\\)','\\(P\\) and \\(\\lnot Q\\)'],
-      answer:'If \\(\\lnot Q\\) then \\(\\lnot P\\)',
-      explain:'The contrapositive is logically equivalent to the original implication. "If \\(Q\\) then \\(P\\)" is the converse and "if \\(\\lnot P\\) then \\(\\lnot Q\\)" the inverse; neither is equivalent to the original.' },
-  ],
-  'trigonometric-functions': [
-    { q:'What is \\(\\cos(\\pi/3)\\)?',
-      options:['\\(\\tfrac12\\)','\\(\\tfrac{\\sqrt3}{2}\\)','\\(\\tfrac{\\sqrt2}{2}\\)','\\(1\\)'], answer:'\\(\\tfrac12\\)',
-      explain:'\\(\\pi/3\\) is \\(60^\\circ\\), where the point on the unit circle is \\((\\tfrac12, \\tfrac{\\sqrt3}{2})\\). The second option is \\(\\sin(\\pi/3)\\) \u2014 swapping sine and cosine is the usual slip.' },
-  ],
-  pythagorean: [
-    { q:'A right triangle has legs of length \\(9\\) and \\(12\\). What is the hypotenuse?',
-      options:['15','21','13','16'], answer:'15',
-      explain:'\\(9^{2}+12^{2}=81+144=225\\) and \\(\\sqrt{225}=15\\). Answering 21 adds the legs rather than their squares.' },
-  ],
-};
+const MATH_QUESTIONS = {};
 window.MATH_QUESTIONS = MATH_QUESTIONS;
 
 /* shuffle the options, then recover the index, so the key cannot drift */
@@ -7350,65 +6663,8 @@ function renderCats(){
   document.getElementById('cat-row').innerHTML = html;
 }
 
-function renderGrid(){
-  const term = searchTerm.trim().toLowerCase();
-  const sort = document.getElementById('sort-select').value;
-  const statusFilter = document.getElementById('status-select').value;
+/* renderGrid: an earlier definition stood here — superseded by the later definition that renders the field cards. Removed; the live one is below. */
 
-  let filtered = visibleConcepts().filter(c => {
-    if(activeCat !== 'all' && c.field !== activeCat) return false;
-    if(statusFilter !== 'all' && conceptStatus(c.id) !== statusFilter) return false;
-    if(!term) return true;
-    const a = articleForConcept(c.id);
-    const hay = [c.name, c.summary, CATS[c.field].label, c.kind,
-      a ? a.tags.join(' ') : '',
-      edgesOf(c.id).map(e => conceptName(otherEnd(e, c.id))).join(' ')].join(' ').toLowerCase();
-    return hay.includes(term);
-  });
-
-  const viewsOf = c => { const a = articleForConcept(c.id); return a ? a.views : 0; };
-  const dateOf  = c => { const a = articleForConcept(c.id); return a ? new Date(a.date) : new Date(0); };
-  if(sort === 'views') filtered = [...filtered].sort((a, b) => viewsOf(b) - viewsOf(a));
-  else if(sort === 'az') filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
-  else if(sort === 'connections') filtered = [...filtered].sort((a, b) => connectionCount(b.id) - connectionCount(a.id));
-  else if(sort === 'difficulty') filtered = [...filtered].sort((a, b) => a.difficulty - b.difficulty);
-  else filtered = [...filtered].sort((a, b) => dateOf(b) - dateOf(a));
-
-  document.getElementById('grid-count').textContent = `${filtered.length} concept${filtered.length===1?'':'s'}`;
-  document.getElementById('grid-title').textContent =
-    activeCat === 'all' ? 'Browse the concept graph' : CATS[activeCat].label;
-
-  if(!filtered.length){
-    document.getElementById('card-grid').innerHTML =
-      `<div class="empty-state"><div class="glyph">∅</div><p>No concepts match your search.</p></div>`;
-    return;
-  }
-  document.getElementById('card-grid').innerHTML = filtered.map(c => {
-    const a = articleForConcept(c.id);
-    const bookmarked = BOOKMARKS[CURRENT_ROLE].includes(c.id);
-    const showFlags = isRole('reviewer','admin') && a && a.flags.length > 0;
-    const prog = progressOf(c.id);
-    const blurb = a ? a.abstract.replace(/\\\(|\\\)/g, '') : c.summary;
-    return `
-    <div class="card" onclick="openConcept('${c.id}')">
-      <div class="card-top">
-        <div class="cat-tag"><span class="d" style="background:${CATS[c.field].color}"></span>${CATS[c.field].label}</div>
-        <div class="card-top-right">
-          ${showFlags ? `<span class="flag-badge">${a.flags.length} flag${a.flags.length===1?'':'s'}</span>` : ''}
-          ${prog ? `<span class="prog-dot ${prog}" title="${prog}"></span>` : ''}
-          <button class="bm-btn ${bookmarked?'on':''}" onclick="toggleBookmark('${c.id}', event)" title="Bookmark">${bookmarked?'★':'☆'}</button>
-        </div>
-      </div>
-      <h3>${c.name}</h3>
-      <p>${blurb}</p>
-      <div class="card-rel">${connectionCount(c.id)} connections · ${prerequisitesOf(c.id).length} prerequisite${prerequisitesOf(c.id).length===1?'':'s'}</div>
-      <div class="card-foot">
-        ${statusPill(c.id)}
-        ${healthBar(c.id, true)}
-      </div>
-    </div>`;
-  }).join('');
-}
 
 /* ---------------- tabs ---------------- */
 const TAB_PANELS = {
@@ -8870,99 +8126,7 @@ const FIELD_GLYPH = {
    One plain numerical for the concepts students most often bounce off —
    the arithmetic, not the theory.
    ========================================================================== */
-const EXAMPLES = {
-  sets: { q:'Let \\(A=\\{1,2,3,4\\}\\) and \\(B=\\{3,4,5\\}\\). Find \\(A\\cup B\\), \\(A\\cap B\\), \\(A\\setminus B\\) and \\(|A\\times B|\\).',
-    steps:['Union — everything in either set: \\(A\\cup B=\\{1,2,3,4,5\\}\\)',
-           'Intersection — only what is in both: \\(A\\cap B=\\{3,4\\}\\)',
-           'Difference — in \\(A\\) but not \\(B\\): \\(A\\setminus B=\\{1,2\\}\\)',
-           'The Cartesian product has one pair for each choice: \\(|A|\\cdot|B| = 4\\times 3\\)'],
-    a:'\\(A\\cup B=\\{1,2,3,4,5\\},\\; A\\cap B=\\{3,4\\},\\; A\\setminus B=\\{1,2\\},\\; |A\\times B| = 12\\)' },
-
-  functions: { q:'For \\(f(x)=2x+1\\) and \\(g(x)=x^{2}\\), evaluate \\((f\\circ g)(3)\\) and \\((g\\circ f)(3)\\).',
-    steps:['Work inside out. \\(g(3)=3^{2}=9\\)','Then \\(f(9)=2(9)+1=19\\)',
-           'The other order: \\(f(3)=2(3)+1=7\\)','Then \\(g(7)=7^{2}=49\\)'],
-    a:'\\((f\\circ g)(3)=19\\) and \\((g\\circ f)(3)=49\\); composition of functions is not commutative in general.' },
-
-  limits: { q:'Evaluate \\(\\displaystyle\\lim_{x\\to 3}\\frac{x^{2}-9}{x-3}\\).',
-    steps:['Substituting gives \\(0/0\\), so factor instead.',
-           '\\(x^{2}-9=(x-3)(x+3)\\)',
-           'Cancel the common factor: \\(\\frac{(x-3)(x+3)}{x-3}=x+3\\) for \\(x\\neq 3\\)',
-           'Now substitute: \\(3+3\\)'],
-    a:'\\(\\displaystyle\\lim_{x\\to 3}\\frac{x^{2}-9}{x-3}=6\\)' },
-
-  derivatives: { q:'Differentiate \\(f(x)=3x^{4}-5x+2\\) and evaluate \\(f\'(1)\\).',
-    steps:['Power rule term by term: \\(\\frac{d}{dx}x^{n}=nx^{n-1}\\)',
-           '\\(\\frac{d}{dx}(3x^{4})=12x^{3}\\)',
-           '\\(\\frac{d}{dx}(-5x)=-5\\), and the constant \\(2\\) differentiates to \\(0\\)',
-           'So \\(f\'(x)=12x^{3}-5\\); at \\(x=1\\): \\(12-5\\)'],
-    a:'\\(f\'(x)=12x^{3}-5\\) and \\(f\'(1)=7\\)' },
-
-  integrals: { q:'Evaluate \\(\\displaystyle\\int_{0}^{2} 3x^{2}\\,dx\\).',
-    steps:['Reverse the power rule: \\(\\int x^{n}dx=\\frac{x^{n+1}}{n+1}+C\\) for \\(n\\neq -1\\)',
-           'An antiderivative of \\(3x^{2}\\) is \\(x^{3}\\)',
-           'Evaluate at the limits: \\(\\left[x^{3}\\right]_{0}^{2}=2^{3}-0^{3}\\)'],
-    a:'\\(\\displaystyle\\int_{0}^{2}3x^{2}\\,dx = 8\\). Since \\(3x^{2}\\ge 0\\) on \\([0,2]\\), this signed accumulation is also the geometric area under the curve.' },
-
-  ftc: { q:'Given \\(F(x)=\\displaystyle\\int_{1}^{x} t^{2}\\,dt\\), find \\(F\'(x)\\) and \\(F(4)\\).',
-    steps:['The theorem says differentiating an accumulation undoes the integral: \\(F\'(x)=x^{2}\\)',
-           'For the value, antidifferentiate: \\(\\int t^{2}dt=\\tfrac{t^{3}}{3}\\)',
-           '\\(F(4)=\\tfrac{4^{3}}{3}-\\tfrac{1^{3}}{3}=\\tfrac{64-1}{3}\\)'],
-    a:'\\(F\'(x)=x^{2}\\) and \\(F(4)=21\\)' },
-
-  'complex-numbers': { q:'Compute \\((3+2i)(1-4i)\\).',
-    steps:['Expand as usual: \\(3(1)+3(-4i)+2i(1)+2i(-4i)\\)',
-           '\\(=3-12i+2i-8i^{2}\\)',
-           'Use \\(i^{2}=-1\\), so \\(-8i^{2}=+8\\)',
-           'Collect: \\((3+8)+(-12+2)i\\)'],
-    a:'\\((3+2i)(1-4i)=11-10i\\)' },
-
-  'modular-arithmetic': { q:'Compute \\(17\\times 23 \\pmod 5\\).',
-    steps:['Reduce each factor first — that is legal in modular arithmetic.',
-           '\\(17\\equiv 2\\pmod 5\\) and \\(23\\equiv 3\\pmod 5\\)',
-           'Multiply the small numbers: \\(2\\times 3=6\\)',
-           '\\(6\\equiv 1\\pmod 5\\)'],
-    a:'\\(17\\times 23\\equiv 1 \\pmod 5\\)' },
-
-  polynomials: { q:'Factor \\(x^{2}-5x+6\\) and state its roots.',
-    steps:['Look for two numbers multiplying to \\(+6\\) and adding to \\(-5\\).',
-           'Those are \\(-2\\) and \\(-3\\).',
-           'So \\(x^{2}-5x+6=(x-2)(x-3)\\)',
-           'A product is zero when a factor is zero.'],
-    a:'\\((x-2)(x-3)\\), with roots \\(x=2\\) and \\(x=3\\)' },
-
-  'probability-space': { q:'A fair six-sided die is rolled once and \\(X\\) denotes the number shown. Find \\(P(X \\text{ even})\\) and \\(P(X>4)\\).',
-    steps:['Sample space \\(\\Omega=\\{1,2,3,4,5,6\\}\\), each outcome equally likely.',
-           'Even outcomes: \\(\\{2,4,6\\}\\) — three of six.',
-           'Greater than 4: \\(\\{5,6\\}\\) — two of six.'],
-    a:'\\(P(X\\text{ even})=\\tfrac{3}{6}=\\tfrac12\\) and \\(P(X>4)=\\tfrac{2}{6}=\\tfrac13\\)' },
-
-  'conditional-probability': { q:'In a class, \\(60\\%\\) study French, \\(30\\%\\) study both French and German. Given a student studies French, what is the chance they also study German?',
-    steps:['Write what is asked: \\(P(G\\mid F)=\\dfrac{P(G\\cap F)}{P(F)}\\)',
-           'Substitute: \\(\\dfrac{0.30}{0.60}\\)'],
-    a:'\\(P(G\\mid F)=0.5\\) — half of the French students.' },
-
-  expectation: { q:'For a fair six-sided die, compute \\(E[X]\\) and \\(\\operatorname{Var}(X)\\).',
-    steps:['\\(E[X]=\\frac{1}{6}(1+2+3+4+5+6)=\\frac{21}{6}\\)',
-           '\\(E[X^{2}]=\\frac{1}{6}(1+4+9+16+25+36)=\\frac{91}{6}\\)',
-           '\\(\\operatorname{Var}(X)=E[X^{2}]-(E[X])^{2}=\\frac{91}{6}-\\left(\\frac{7}{2}\\right)^{2}\\)'],
-    a:'\\(E[X]=3.5\\) and \\(\\operatorname{Var}(X)=\\tfrac{35}{12}\\approx 2.92\\)' },
-
-  'bayes-theorem': { q:'A disease has prevalence \\(P(D)=0.01\\). A test has \\(P(+\\mid D)=0.99\\) and \\(P(+\\mid D^{c})=0.05\\). Find \\(P(D\\mid +)\\).',
-    steps:['Bayes: \\(P(D\\mid+)=\\dfrac{P(+\\mid D)P(D)}{P(+)}\\)',
-           'Total probability for the denominator: \\(P(+)=(0.99)(0.01)+(0.05)(0.99)\\)',
-           '\\(P(+)=0.0099+0.0495=0.0594\\)',
-           'Divide: \\(\\dfrac{0.0099}{0.0594}=\\dfrac16\\)'],
-    a:'\\(P(D\\mid+)=\\tfrac16\\approx 0.167\\) — a positive test leaves an \\(83\\%\\) chance of being disease-free, because healthy people are so much more numerous.' },
-
-  pythagorean: { q:'A right triangle has legs \\(a=5\\) and \\(b=12\\). Find the hypotenuse, taking lengths to be positive.',
-    steps:['\\(a^{2}+b^{2}=c^{2}\\)','\\(25+144=169\\)','Lengths are positive, so take the positive root: \\(c=\\sqrt{169}\\)'],
-    a:'\\(c=13\\)' },
-
-  'normal-distribution': { q:'Scores are normal with mean \\(\\mu=70\\) and standard deviation \\(\\sigma=8\\). What is the \\(z\\)-score of \\(86\\)?',
-    steps:['\\(z=\\dfrac{x-\\mu}{\\sigma}\\)','\\(z=\\dfrac{86-70}{8}=\\dfrac{16}{8}\\)',
-           'A \\(z\\) of 2 means two standard deviations above the mean.'],
-    a:'\\(z=2\\) — roughly the top \\(2.3\\%\\) of scores.' },
-};
+const EXAMPLES = {};
 window.EXAMPLES = EXAMPLES;
 
 /* ==========================================================================
@@ -10500,8 +9664,9 @@ window.promoteUser = function(id){
    platform owner's own credentials, which land straight in the console.
    ========================================================================== */
 /* One clearly identified seeded administrator. Sign-in is the ordinary form
-   and routing is by role — there is no special-cased credential check. */
-ACCOUNTS.push({ username:'administrative1023', password:'ADMINISTRATIVE1023', role:'admin',
+   and routing is by role — there is no special-cased credential check, and
+   the password lives only as a bcrypt hash in the database. */
+ACCOUNTS.push({ username:'administrative1023', role:'admin',
   status:'active', name:'Platform Administrator',
   credential:'Mathopedia platform operations', email:'ops@mathopedia.test', hidden:true });
 
@@ -13105,12 +12270,17 @@ else bootAuth();
 <script>
 /* ==========================================================================
    DATABASE AS SOURCE OF TRUTH
-   The server injects window.__BOOTSTRAP__ ahead of the app scripts. The seeded
-   literals above remain only so the file still opens standalone; when the
-   server serves this page, their contents are replaced in place here. The
-   arrays keep their identity, so every closure already holding a reference
-   sees the database rows. Runs before DOMContentLoaded, so the first render is
-   already database-backed.
+   The server injects window.__BOOTSTRAP__ ahead of the app scripts, and the
+   empty containers declared above are filled in place here. They keep their
+   identity, so every closure already holding a reference sees the database
+   rows. Runs before DOMContentLoaded, so the first render is already
+   database-backed.
+
+   There is no seeded copy of the encyclopedia in this file any more. CATS and
+   FIELD_GLYPH stay because the shell, the field colours and the theme need
+   them before anything is fetched; everything else comes from SQLite. Without
+   the server there is no content to show, so the page says so plainly instead
+   of rendering an empty encyclopedia that looks broken.
 
    Every symbol is probed before use: several of these are closure-scoped in
    their own script block and simply are not reachable from here, and one
@@ -13118,7 +12288,7 @@ else bootAuth();
    ========================================================================== */
 (function(){
   const B = window.__BOOTSTRAP__;
-  if(!B) return;                       // opened as a bare file: keep the seeds
+  if(!B){ showServerUnavailable(); return; }
 
   const swapped = [];
   function swapArray(name, rows){
@@ -13151,6 +12321,38 @@ else bootAuth();
   window.__DB_SWAPPED__ = swapped;
   console.info('[mathopedia] from database: ' + CONCEPTS.length + ' concepts, ' +
                EDGES.length + ' relationships, ' + ARTICLES.length + ' articles');
+
+/* Shown when the page is opened without its server — as a bare file, or with
+   the server stopped. Styled from the same tokens as the rest of the site, so
+   it reads as part of Mathopedia rather than a browser error. */
+function showServerUnavailable(){
+  document.documentElement.setAttribute('data-unavailable', '1');
+  const host = document.createElement('div');
+  host.className = 'srv-down';
+  host.innerHTML =
+    '<div class="srv-down-card" role="alert">' +
+      '<div class="srv-down-mark" aria-hidden="true">' +
+        '<svg viewBox="0 0 48 48" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.4">' +
+          '<circle cx="24" cy="24" r="18"/><path d="M24 14v12"/><circle cx="24" cy="32.5" r="1.4" fill="currentColor" stroke="none"/>' +
+        '</svg></div>' +
+      '<h1>Mathopedia server unavailable</h1>' +
+      '<p>This page is the interface only. Every concept, article, revision and ' +
+         'account lives in the Mathopedia database, and the server that reads it ' +
+         'is not responding.</p>' +
+      '<p class="srv-down-fix">Start it from the project directory:</p>' +
+      '<pre><code>npm start</code></pre>' +
+      '<p class="srv-down-fine">Then reload this page. The default address is ' +
+         '<code>http://localhost:3001</code>.</p>' +
+      '<button class="btn primary" type="button" id="srv-down-retry">Reload</button>' +
+    '</div>';
+  const paint = () => {
+    document.body.appendChild(host);
+    const b = document.getElementById('srv-down-retry');
+    if(b) b.addEventListener('click', () => location.reload());
+  };
+  if(document.body) paint();
+  else document.addEventListener('DOMContentLoaded', paint, { once:true });
+}
 })();
 </script>
 <script>

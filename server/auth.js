@@ -10,18 +10,18 @@ export const router = express.Router();
 
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 const norm = e => String(e || '').trim().toLowerCase();
-export const userByEmail = e => one('SELECT * FROM users WHERE email = ?', norm(e));
+const userByEmail = e => one('SELECT * FROM users WHERE email = ?', norm(e));
 const userByUsername = u => one('SELECT * FROM users WHERE username = ?', norm(u));
 
 /* sign-in accepts either, so the seeded demo logins ("reviewer") still work
    while real accounts use their address */
 const lookup = idf => userByEmail(idf) || userByUsername(idf);
 
-export const pub = u => ({ email: u.email, name: u.name, username: u.username,
+const pub = u => ({ email: u.email, name: u.name, username: u.username,
   role: u.role, credential: u.credential, emailVerified: !!u.email_verified });
 
 /* ---------------------------------------------------------------- limits */
-export function limited(bucket, max, windowMs, msg) {
+function limited(bucket, max, windowMs, msg) {
   run('DELETE FROM attempts WHERE at < ?', now() - 86400e3);
   const n = one('SELECT COUNT(*) c FROM attempts WHERE bucket = ? AND at > ?', bucket, now() - windowMs).c;
   if (n >= max) return msg;
@@ -35,7 +35,7 @@ const loginLimit = e => limited(`login:${e}`, 10, 900e3, 'Too many sign-in attem
 /* ---------------------------------------------------------------- tokens
    Stored hashed with a purpose, so the raw value exists only inside the email
    and a verification token cannot be replayed as a reset. */
-export function issueToken(email, purpose, minutes) {
+function issueToken(email, purpose, minutes) {
   run('DELETE FROM tokens WHERE email = ? AND purpose = ?', email, purpose);
   const raw = crypto.randomBytes(32).toString('base64url');
   run('INSERT INTO tokens (token_hash,email,purpose,expires_at) VALUES (?,?,?,?)',
@@ -59,7 +59,7 @@ function sixDigits() {
     }
   return out.join('');
 }
-export function issueCode(email, purpose, minutes) {
+function issueCode(email, purpose, minutes) {
   run('DELETE FROM tokens WHERE email = ? AND purpose = ?', email, purpose);
   const code = sixDigits();
   run('INSERT INTO tokens (token_hash,email,purpose,expires_at) VALUES (?,?,?,?)',
@@ -93,12 +93,12 @@ export function startSession(res, userId) {
   res.cookie(COOKIE, raw, { httpOnly: true, sameSite: 'lax',
     secure: process.env.COOKIE_SECURE === '1', maxAge: 7 * 864e5, path: '/' });
 }
-export function endSession(req, res) {
+function endSession(req, res) {
   const raw = req.cookies[COOKIE];
   if (raw) run('DELETE FROM sessions WHERE token_hash = ?', sha(raw + SECRET));
   res.clearCookie(COOKIE, { path: '/' });
 }
-export function sessionUser(req) {
+function sessionUser(req) {
   const raw = req.cookies?.[COOKIE];
   if (!raw) return null;
   const s = one('SELECT * FROM sessions WHERE token_hash = ? AND expires_at > ?', sha(raw + SECRET), now());

@@ -13,7 +13,7 @@ const MAX_RAW = 600;
 
 /* http and https only. Anything else — javascript:, data:, vbscript:, file: —
    is dropped rather than stored, so it can never reach an href. */
-export function safeUrl(input) {
+function safeUrl(input) {
   const s = String(input || '').trim();
   if (!s) return null;
   let u;
@@ -58,7 +58,7 @@ function validate(r) {
 
 /* reuse an identical citation rather than storing it twice; fields supplied
    this time fill gaps on an existing row without overwriting what is there */
-export function upsertRef(r) {
+function upsertRef(r) {
   const norm = normalise(r.raw);
   const hit = one('SELECT * FROM refs WHERE norm = ?', norm);
   if (hit) {

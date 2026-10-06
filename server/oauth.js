@@ -1,7 +1,7 @@
 import express from 'express';
 import crypto from 'node:crypto';
 import { one, run, now } from './db.js';
-import { startSession, pub } from './auth.js';
+import { startSession } from './auth.js';
 import { audit } from './audit.js';
 
 /* Google sign-in via the server-side authorization-code flow.
@@ -92,4 +92,3 @@ router.get('/google/callback', async (req, res) => {
   }
 });
 
-export { pub };
