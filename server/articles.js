@@ -5,7 +5,7 @@ import { audit } from './audit.js';
 import { dateLabel } from './api.js';
 import { indexArticle, indexConcept } from './search.js';
 import { setArticleRefs, articleRefs, usageCounts } from './refs.js';
-import { ok } from './http.js';
+import { ok, badRequest } from './http.js';
 
 export const router = express.Router();
 
@@ -90,7 +90,7 @@ router.post('/', requireRole('contributor', 'reviewer', 'admin'), ok((req, res) 
     let stored = [];
     if (references !== undefined) {
       const r = setArticleRefs(aid, references);
-      if (r.error) throw new Error(r.error);        // rolls the whole creation back
+      if (r.error) throw badRequest(r.error);       // rolls the whole creation back
       stored = r.refs;
     }
 
