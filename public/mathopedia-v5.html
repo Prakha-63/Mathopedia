@@ -219,7 +219,12 @@ footer .fine{ font-family:var(--ui); font-size:11.5px; color:var(--ink-faint); l
 .btn:disabled{ opacity:0.35; cursor:not-allowed }
 #view-article{ display:none }
 #view-article.active{ display:block }
-.article-shell{ max-width:1280px; margin:0 auto; padding:30px 34px 110px }
+/* Wide enough for the contents and no wider: table of contents (212) + gap
+   (56) + the 70ch reading measure (~581) is about 850, and the header row of
+   actions sits comfortably in that. At 1280 the shell was far wider than
+   anything inside it, so the article hugged the left of the window with the
+   remainder stranded on the right. */
+.article-shell{ max-width:936px; margin:0 auto; padding:30px 34px 110px }
 .breadcrumb{ font-family:var(--ui); font-size:12.5px; color:var(--ink-faint); margin-bottom:22px; cursor:pointer }
 .breadcrumb .back{ color:var(--link) }
 .breadcrumb .back:hover{ text-decoration:underline }
@@ -230,7 +235,14 @@ footer .fine{ font-family:var(--ui); font-size:11.5px; color:var(--ink-faint); l
 .action-row{ display:flex; gap:7px; flex-wrap:wrap; margin-top:20px }
 .tab:hover{ color:var(--ink) }
 .tab.active{ color:var(--ink); font-weight:600; border-color:var(--ink) }
-.article-body-layout{ display:grid; grid-template-columns:212px minmax(0,1fr); gap:56px; align-items:start }
+/* The prose column is sized to the reading measure, not to whatever width is
+   left over. With minmax(0,1fr) it took the full 944px at 1440 while the text
+   inside caps at 70ch (~581px), leaving ~363px of dead space on the right —
+   nothing in an article needs that width, there are no full-bleed figures or
+   tables. The tracks stay left-aligned so the table of contents lines up with
+   the breadcrumb, header and tabs above it; .article-shell is what centres the
+   whole block on the page. */
+.article-body-layout{ display:grid; grid-template-columns:212px minmax(0,70ch); gap:56px; align-items:start }
 .toc{ position:sticky; top:88px }
 .toc-label{ font-family:var(--ui); font-size:10.5px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:11px }
 .toc a{ display:block; font-family:var(--ui); font-size:13px; color:var(--ink-soft); text-decoration:none; padding:6px 0 6px 12px; border-left:1px solid var(--rule); line-height:1.4; cursor:pointer }
@@ -266,7 +278,10 @@ footer .fine{ font-family:var(--ui); font-size:11.5px; color:var(--ink-faint); l
 .related-item{ display:block; font-family:var(--serif); font-size:14px; text-decoration:none; padding:9px 0; border-bottom:1px solid var(--rule); cursor:pointer; line-height:1.4 }
 .related-item:hover{ color:var(--link) }
 .related-item .rc{ font-family:var(--ui); font-size:10px; font-weight:600; letter-spacing:0.05em; color:var(--ink-faint); display:block; margin-bottom:3px; text-transform:uppercase }
-.abstract{ font-family:var(--serif); font-style:normal; font-size:calc(18.5px * var(--reader-scale, 1)); color:var(--ink); line-height:1.62; padding:0 0 28px 0; margin-bottom:28px; border-bottom:1px solid var(--rule); max-width:70ch }
+/* 70ch in the serif face is wider than 70ch in the body face, so an abstract
+   capped at 70ch overhung the article text below it by about 75px. 62 serif
+   characters is the same printed width, which lines the two right edges up. */
+.abstract{ font-family:var(--serif); font-style:normal; font-size:calc(18.5px * var(--reader-scale, 1)); color:var(--ink); line-height:1.62; padding:0 0 28px 0; margin-bottom:28px; border-bottom:1px solid var(--rule); max-width:62ch }
 .article-content{ max-width:70ch }
 .article-content h2{ font-family:var(--serif); font-weight:600; font-size:calc(22px * var(--reader-scale, 1)); letter-spacing:-0.02em; margin:44px 0 0; padding-bottom:9px; border-bottom:1px solid var(--rule); scroll-margin-top:96px }
 .article-content h2 + p{ margin-top:18px }
