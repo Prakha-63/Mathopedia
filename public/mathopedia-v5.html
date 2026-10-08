@@ -993,12 +993,23 @@ footer:not(.lg-foot){ border-top:1px solid var(--rule); padding:36px 0 52px; mar
 .fp-head p{ font-family:var(--ui); font-size:12px; color:var(--ink-faint); margin:4px 0 0 }
 .fp-close{ background:none; border:0; font-size:22px; line-height:1; color:var(--ink-faint); cursor:pointer; padding:0 4px }
 .fp-close:hover{ color:var(--ink) }
-.fp-list{ list-style:none; margin:0; padding:0; counter-reset:fp }
-.fp-item{ position:relative; display:flex; gap:14px; padding:10px 0 10px 4px; border-top:1px solid var(--rule) }
+/* Topics read across in cells divided by rules, the same arrangement the
+   featured articles use, rather than down a single column. It stays an <ol>:
+   the order is the point ("first principles to the deep end") and the counter
+   still numbers each cell.
+
+   auto-fit rather than a fixed column count with breakpoints: the panel is
+   three across on a desktop, two on a tablet and one on a phone without any
+   media queries, so it cannot be broken by the order the breakpoints happen
+   to appear in this stylesheet. 300px is the narrowest a topic stays
+   readable at. */
+.fp-list{ list-style:none; margin:0; padding:0; counter-reset:fp;
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap:0;
+  border-top:1px solid var(--rule) }
+.fp-item{ position:relative; display:flex; gap:12px; align-items:flex-start; min-width:0;
+  padding:15px 20px 14px 16px; border-bottom:1px solid var(--rule); border-right:1px solid var(--rule) }
 .fp-dot{ position:relative; flex-shrink:0; width:20px; height:20px; margin-top:2px; border-radius:50%; border:1px solid var(--rule-strong); background:var(--paper); display:flex; align-items:center; justify-content:center }
 .fp-dot::after{ counter-increment:fp; content:counter(fp); font-family:var(--mono); font-size:9.5px; color:var(--ink-faint) }
-.fp-item::before{ content:''; position:absolute; left:14px; top:26px; bottom:-2px; width:1px; background:var(--rule) }
-.fp-item:last-child::before{ display:none }
 .fp-body{ min-width:0; flex:1 }
 .fp-name{ font-family:var(--serif); font-size:15.5px; font-weight:600; letter-spacing:-0.012em; color:var(--ink); background:none; border:0; padding:0; cursor:pointer; text-align:left }
 .fp-name:hover{ color:var(--link); text-decoration:underline }
