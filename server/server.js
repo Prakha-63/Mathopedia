@@ -9,6 +9,7 @@ import { router as oauthRoutes, googleReady } from './oauth.js';
 import { router as adminRoutes } from './admin.js';
 import { router as articleRoutes } from './articles.js';
 import { router as searchRoutes } from './search.js';
+import { router as notifyRoutes } from './notify.js';
 import { smtpReady } from './mail.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -39,6 +40,7 @@ app.use('/api/auth', oauthRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/notifications', notifyRoutes);
 
 /* The page is served with the current database contents inlined ahead of the
    app scripts: no fetch race, and the view keeps reading the shapes it already

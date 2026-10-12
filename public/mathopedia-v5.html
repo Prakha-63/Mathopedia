@@ -300,6 +300,25 @@ footer .fine{ font-family:var(--ui); font-size:11.5px; color:var(--ink-faint); l
 .review-panel{ background:var(--seal-soft); border:1px solid var(--seal); border-radius:var(--radius); padding:20px; margin-bottom:28px }
 .review-panel h3{ font-family:var(--ui); font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--seal-deep); margin:0 0 12px }
 .review-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px }
+
+/* ---------- the decision, as its author sees it ----------
+   Sits where the reviewer's own panel sits, so a decision on your own
+   submission is the first thing on the article rather than something to go
+   hunting for under Discussion. Warn colours for a return, danger for a
+   rejection — both quieter than the published seal. */
+.review-decision{ border:1px solid; border-radius:var(--radius); padding:18px 20px; margin-bottom:28px }
+.review-decision.returned{ background:var(--warn-soft); border-color:var(--warn) }
+.review-decision.rejected{ background:var(--danger-soft); border-color:var(--danger) }
+.review-decision h3{ font-family:var(--ui); font-size:11px; font-weight:600; letter-spacing:0.08em;
+  text-transform:uppercase; margin:0 0 8px }
+.review-decision.returned h3{ color:var(--warn) }
+.review-decision.rejected h3{ color:var(--danger) }
+.review-decision .rd-by{ font-family:var(--ui); font-size:13px; color:var(--ink-soft); margin:0 }
+.review-decision .rd-note{ font-family:var(--serif); font-size:15px; line-height:1.6; color:var(--ink);
+  margin:12px 0 0; padding:0 0 0 14px; border-left:2px solid currentColor }
+.review-decision.returned .rd-note{ border-left-color:var(--warn) }
+.review-decision.rejected .rd-note{ border-left-color:var(--danger) }
+.review-decision .btn{ margin-top:14px }
 .comment{ display:flex; gap:14px; padding:18px 0; border-bottom:1px solid var(--rule) }
 .avatar{ width:32px; height:32px; border-radius:50%; background:var(--sunken); color:var(--ink-soft); border:1px solid var(--rule-strong); display:flex; align-items:center; justify-content:center; font-family:var(--ui); font-size:11px; font-weight:600; flex-shrink:0 }
 .avatar.sys{ background:var(--seal-soft); color:var(--seal); border-color:var(--seal) }
@@ -12974,7 +12993,15 @@ else watchRefs();
 const _submit = window.submitArticle;
 window.submitArticle = async function(){
   const idEl = el('ed-article-id');
-  const editingId = (window.editingArticleId !== undefined ? window.editingArticleId : null)
+  /* editingArticleId is a top-level `let`, which lives in the shared script
+     scope and is NOT a property of window — reading window.editingArticleId
+     always gave undefined, so every edit of an existing article fell through
+     to the create path and was saved as a duplicate instead of a revision.
+     eval reaches the real binding; the other two sources stay as fallbacks. */
+  let scopedId = null;
+  try{ scopedId = eval('editingArticleId'); }catch(e){ /* not in scope here */ }
+  const editingId = scopedId
+                 || (window.editingArticleId !== undefined ? window.editingArticleId : null)
                  || (idEl && idEl.value) || null;
 
   const a = editingId ? ARTICLES.find(x => x.id === editingId) : null;
@@ -13024,7 +13051,11 @@ window.submitArticle = async function(){
       EDGES.length = 0;    fresh.edges.forEach(e => EDGES.push(e));
       ARTICLES.length = 0; fresh.articles.forEach(x => ARTICLES.push(x));
     }
+    /* clear the real binding as well as the window one, or the next new
+       article would be saved as a revision of this one */
+    try{ eval('editingArticleId = null'); }catch(e){ /* not in scope here */ }
     window.editingArticleId = null;
+    if(idEl) idEl.value = '';
     toast('Saved as ' + d.version + ' — submitted for review.');
     showView('home');
   }catch(e){
@@ -13034,5 +13065,208 @@ window.submitArticle = async function(){
 })();
 
 </script>
+
+<script>
+/* ==========================================================================
+   REVIEW DECISIONS AND NOTIFICATIONS, SERVED FROM THE DATABASE
+
+   A reviewer's decision used to be applied to an in-memory object: the status
+   reverted on reload, and the author — a different session entirely — was
+   never told. Notifications had the same shape, an array keyed by role, so a
+   message meant for the author of an article reached whoever happened to be
+   signed in as a contributor in that browser tab.
+
+   Decisions now post to /api/articles/:id/review and notifications are read
+   from /api/notifications, where they are addressed to a person. The markup
+   and the controls are the ones already in the page.
+   ========================================================================== */
+(function(){
+const el = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                   .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* ------------------------------------------------------------ new status
+   'needs_revision' is an article returned to its author. It is not public,
+   it is not in the reviewer queue, and it is not a rejection. */
+try{ if(typeof STATUS_LABEL === 'object' && STATUS_LABEL)
+       STATUS_LABEL.needs_revision = 'Changes Requested'; }catch(e){ /* not in scope here */ }
+
+if(typeof window.conceptStatus === 'function'){
+  const _conceptStatus = window.conceptStatus;
+  window.conceptStatus = function(cid){
+    try{
+      const a = articleForConcept(cid);
+      if(a && a.status === 'needs_revision') return 'under_review';   // pill reads "Under Review"
+    }catch(e){ /* fall through to the original */ }
+    return _conceptStatus.apply(this, arguments);
+  };
+}
+
+/* an article sent back for changes is visible to its author and to staff */
+if(typeof window.conceptVisible === 'function'){
+  const _conceptVisible = window.conceptVisible;
+  window.conceptVisible = function(c){
+    try{
+      const a = articleForConcept(c.id);
+      if(a && a.status === 'needs_revision')
+        return isRole('admin','reviewer') ||
+               (isRole('contributor') && a.author === currentUser().name);
+    }catch(e){ /* fall through */ }
+    return _conceptVisible.apply(this, arguments);
+  };
+}
+
+/* ------------------------------------------------------- the decision itself */
+window.reviewAction = async function(id, action){
+  const a = (typeof findArticle === 'function') ? findArticle(id) : null;
+  const box = el('review-comment');
+  const comment = box ? box.value.trim() : '';
+  if((action === 'revise' || action === 'reject') && !comment){
+    toast('Please add a comment explaining the decision — the author is shown it.');
+    if(box) box.focus();
+    return;
+  }
+  const buttons = [...document.querySelectorAll('.review-actions .btn')];
+  buttons.forEach(b => b.disabled = true);
+  try{
+    const res = await fetch('/api/articles/' + encodeURIComponent(id) + '/review', {
+      method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action, comment }),
+    });
+    const d = await res.json();
+    if(!res.ok) throw new Error(d.error || 'The decision could not be saved.');
+
+    /* reflect the saved state without a reload */
+    const fresh = await (await fetch('/api/bootstrap', {credentials:'include'})).json();
+    const updated = fresh.articles.find(x => x.id === id);
+    if(updated && a) Object.assign(a, updated);
+    if(Array.isArray(fresh.concepts) && typeof CONCEPTS !== 'undefined'){
+      CONCEPTS.length = 0; fresh.concepts.forEach(c => CONCEPTS.push(c));
+    }
+
+    toast(d.status === 'reviewed' ? 'Approved and published.'
+        : d.status === 'needs_revision' ? 'Sent back to the author with your note.'
+        : 'Rejected, and the author has been told why.');
+
+    /* say so plainly when there is no account behind the byline */
+    if(d.authorNotified === false)
+      setTimeout(() => toast('Note: this article has no account behind its byline, so nobody was notified.'), 2600);
+
+    await refreshNotifications();
+    if(typeof openArticle === 'function') openArticle(id);
+    else if(typeof openConcept === 'function') openConcept(a ? (a.conceptId || a.id) : id);
+  }catch(e){
+    toast(e.message);
+  }finally{
+    buttons.forEach(b => b.disabled = false);
+  }
+};
+
+/* ------------------------------------------- what the author sees on the article
+   The reviewer's note also lands in Discussion, but a decision on your own
+   submission should not have to be gone looking for. */
+if(typeof window.renderReviewPanel === 'function'){
+  const _renderReviewPanel = window.renderReviewPanel;
+  window.renderReviewPanel = function(a){
+    _renderReviewPanel.apply(this, arguments);
+    const holder = el('review-panel-holder');
+    if(!holder || holder.innerHTML.trim()) return;      // the reviewer's own panel won
+    if(!a || (a.status !== 'needs_revision' && a.status !== 'rejected')) return;
+
+    let mine = false;
+    try{ mine = isRole('admin') || (typeof currentUser === 'function' && a.author === currentUser().name); }
+    catch(e){ /* signed out: show nothing */ }
+    if(!mine) return;
+
+    const note = (a.comments || []).filter(c => c.cred === 'Reviewer note').slice(-1)[0];
+    const returned = a.status === 'needs_revision';
+    holder.innerHTML =
+      '<div class="review-decision ' + (returned ? 'returned' : 'rejected') + '">' +
+        '<h3>' + (returned ? 'Changes requested' : 'Not accepted') + '</h3>' +
+        '<p class="rd-by">' + esc(a.reviewer || 'A reviewer') +
+          (returned ? ' asked for changes before this can be published.'
+                    : ' did not accept this submission.') + '</p>' +
+        (note ? '<blockquote class="rd-note">' + esc(note.txt) + '</blockquote>' : '') +
+        (returned ? '<button class="btn primary" onclick="openWriteView(\'' + a.id + '\')">' +
+                    'Revise and resubmit</button>' : '') +
+      '</div>';
+  };
+}
+
+/* ------------------------------------------------------------ notifications */
+let NOTIFS = [];
+
+async function refreshNotifications(){
+  try{
+    const r = await fetch('/api/notifications', { credentials:'include' });
+    if(!r.ok) return;
+    const d = await r.json();
+    NOTIFS = d.notifications || [];
+    paintBell(d.unread || 0);
+  }catch(e){ /* offline or signed out: the bell just keeps its last state */ }
+}
+window.refreshNotifications = refreshNotifications;
+
+function paintBell(unread){
+  const badge = el('bell-badge');
+  if(!badge) return;
+  badge.style.display = unread > 0 ? 'flex' : 'none';
+  badge.textContent = unread;
+}
+
+/* 'just now', '4 min ago', '3 days ago' — the server sends a timestamp */
+function ago(ms){
+  const s = Math.max(0, (Date.now() - ms) / 1000);
+  if(s < 60) return 'just now';
+  const m = Math.floor(s / 60);   if(m < 60)  return m + ' min ago';
+  const h = Math.floor(m / 60);   if(h < 24)  return h + (h === 1 ? ' hour ago' : ' hours ago');
+  const d = Math.floor(h / 24);   if(d < 7)   return d + (d === 1 ? ' day ago' : ' days ago');
+  return new Date(ms).toLocaleDateString();
+}
+
+window.renderNotifBell = function(){ refreshNotifications(); };
+
+window.toggleNotifPanel = function(){
+  const panel = el('notif-panel');
+  if(!panel) return;
+  const willOpen = !panel.classList.contains('open');
+  panel.classList.toggle('open', willOpen);
+  if(!willOpen) return;
+  panel.innerHTML =
+    '<div class="notif-head"><b>Notifications</b><button onclick="markAllRead()">Mark all read</button></div>' +
+    (NOTIFS.length
+      ? NOTIFS.map(n => '<div class="notif-item ' + (n.read ? '' : 'unread') + '">' +
+          esc(n.text) + '<div class="t">' + ago(n.at) + '</div></div>').join('')
+      : '<div class="notif-item" style="color:var(--ink-faint);">No notifications yet.</div>');
+};
+
+window.markAllRead = async function(){
+  try{
+    await fetch('/api/notifications/read', { method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'}, body:'{}' });
+  }catch(e){ /* the panel still closes; the next refresh will re-read the truth */ }
+  NOTIFS.forEach(n => n.read = true);
+  paintBell(0);
+  const panel = el('notif-panel');
+  if(panel && panel.classList.contains('open')){ window.toggleNotifPanel(); window.toggleNotifPanel(); }
+};
+
+/* read them once the page is up, and again after signing in or out */
+if(document.readyState === 'loading')
+  document.addEventListener('DOMContentLoaded', refreshNotifications, { once:true });
+else refreshNotifications();
+
+for(const fn of ['signIn','signOut']){
+  if(typeof window[fn] !== 'function') continue;
+  const _orig = window[fn];
+  window[fn] = async function(){
+    const out = await _orig.apply(this, arguments);
+    refreshNotifications();
+    return out;
+  };
+}
+})();
+</script>
+
 </body>
 </html>

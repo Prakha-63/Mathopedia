@@ -6,6 +6,7 @@ import { dateLabel } from './api.js';
 import { indexArticle, indexConcept } from './search.js';
 import { setArticleRefs, articleRefs, usageCounts } from './refs.js';
 import { ok, badRequest } from './http.js';
+import { notifyUser, notifyRole } from './notify.js';
 
 export const router = express.Router();
 
@@ -165,5 +166,76 @@ router.post('/:id/versions', requireRole('contributor', 'reviewer', 'admin'), ok
   });
 
   audit(req, 'article_revised', a.id, `${a.title} -> v${n + 1}.0`);
-  res.json({ versionId: id, version: `v${n + 1}.0` });
+  notifyRole('reviewer', `"${title}" was resubmitted for review by ${req.user.name || req.user.email}.`);
+  res.json({ versionId: id, version: `v${n + 1}.0`, status: 'under_review' });
 }));
+
+/* ---------------------------------------------------------------- review
+   A reviewer's decision was previously applied to an in-memory object: the
+   status reverted on reload and the author, being a different session, never
+   learned of it. The decision is now a write — status, reviewer, the note
+   itself, an audit entry and a notification addressed to the author. */
+const DECISIONS = {
+  approve: { status: 'reviewed',       needsComment: false, verb: 'approved' },
+  revise:  { status: 'needs_revision', needsComment: true,  verb: 'returned for revision' },
+  reject:  { status: 'rejected',       needsComment: true,  verb: 'rejected' },
+};
+
+router.post('/:id/review', requireRole('reviewer', 'admin'), ok((req, res) => {
+  const a = one('SELECT * FROM articles WHERE id = ?', req.params.id);
+  if (!a) return res.status(404).json({ error: 'No such article.' });
+
+  const d = DECISIONS[req.body?.action];
+  if (!d) return res.status(400).json({ error: 'Unknown review decision.' });
+  if (a.status === d.status)
+    return res.status(409).json({ error: `That article is already ${d.verb}.` });
+  if (a.status === 'reviewed' && req.body.action !== 'reject')
+    return res.status(409).json({ error: 'That article is already published.' });
+
+  const comment = String(req.body?.comment || '').trim();
+  if (d.needsComment && !comment)
+    return res.status(400).json({ error: 'Explain the decision — the author is shown this note.' });
+  if (comment.length > 2000)
+    return res.status(400).json({ error: 'A reviewer note may be at most 2000 characters.' });
+
+  const reviewer = req.user.name || req.user.email;
+  tx(() => {
+    run(`UPDATE articles SET status = ?, reviewer_id = ?, reviewer_name = ?, updated_at = ?
+         WHERE id = ?`, d.status, req.user.id, reviewer, now(), a.id);
+
+    if (comment)
+      run(`INSERT INTO comments (article_id,author_name,author_credential,body,created_at)
+           VALUES (?,?,?,?,?)`, a.id, reviewer, 'Reviewer note', comment, now());
+
+    /* The decision deliberately does not become a row in article_versions.
+       That table is the text history — every row carries a snapshot — and a
+       decision has no text. Recording it there would also inflate the version
+       numbering. The decision is already fully captured by the article's
+       status and reviewer, the note in comments, the audit entry and the
+       author's notification. */
+
+    /* publishing is what records the verification; it is not claimed before */
+    if (req.body.action === 'approve' && a.concept_id) {
+      const v = one('SELECT reviewers FROM verifications WHERE concept_id = ?', a.concept_id);
+      const names = unj(v?.reviewers, []);
+      if (!names.includes(reviewer)) names.push(reviewer);
+      run(`INSERT INTO verifications (concept_id,statement,proof,refs_checked,notation,reviewers,checked_at)
+           VALUES (?,1,1,1,1,?,?)
+           ON CONFLICT(concept_id) DO UPDATE SET statement=1, proof=1, refs_checked=1,
+             notation=1, reviewers=excluded.reviewers, checked_at=excluded.checked_at`,
+          a.concept_id, JSON.stringify(names), dateLabel(now()));
+    }
+    indexArticle(a.id);
+  });
+
+  /* The author is told by name, not by role. A seeded author with no account
+     has nobody to notify, which the response reports honestly. */
+  const told = notifyUser(a.author_id,
+    req.body.action === 'approve'
+      ? `${reviewer} approved and published your article "${a.title}".`
+      : `${reviewer} ${d.verb} your article "${a.title}": "${comment}"`);
+
+  audit(req, 'article_' + req.body.action, a.id, `${a.title} — ${d.verb}${comment ? ': ' + comment : ''}`);
+  res.json({ id: a.id, status: d.status, reviewer, authorNotified: told });
+}));
+

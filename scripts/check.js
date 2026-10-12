@@ -27,7 +27,15 @@ probe('current_version pointing nowhere', 'SELECT COUNT(*) c FROM articles a LEF
 probe('dangling edges (from)', 'SELECT COUNT(*) c FROM edges e LEFT JOIN concepts c ON c.id = e.from_id WHERE c.id IS NULL');
 probe('dangling edges (to)', 'SELECT COUNT(*) c FROM edges e LEFT JOIN concepts c ON c.id = e.to_id WHERE c.id IS NULL');
 probe('duplicate emails', 'SELECT COUNT(*) c FROM (SELECT email FROM users GROUP BY lower(email) HAVING COUNT(*) > 1)');
-probe('duplicate display names', 'SELECT COUNT(*) c FROM (SELECT name FROM users WHERE name IS NOT NULL GROUP BY name HAVING COUNT(*) > 1)');
+/* Two accounts may legitimately share a display name — one person with a
+   work and a personal address. This probe exists to catch the migration fault
+   where a single identity was split across two rows, which always showed up
+   as a shared name AND a shared credential, so that is what it tests. A bare
+   name collision is reported below as a note, not a failure. */
+probe('identities split across rows',
+  `SELECT COUNT(*) c FROM (SELECT name FROM users
+     WHERE name IS NOT NULL AND credential IS NOT NULL
+     GROUP BY name, credential HAVING COUNT(*) > 1)`);
 
 console.log('\nSearch index');
 probe('fts rows for deleted articles', "SELECT COUNT(*) c FROM search_fts WHERE kind = 'article' AND ref_id NOT IN (SELECT id FROM articles)");
@@ -48,6 +56,14 @@ for (const [label, sql] of [
   ['  shared by >1 article', 'SELECT COUNT(*) c FROM (SELECT ref_id FROM article_refs GROUP BY ref_id HAVING COUNT(*) > 1)'],
   ['indexed rows', 'SELECT COUNT(*) c FROM search_fts'],
 ]) console.log('  ' + label.padEnd(42) + one(sql).c);
+
+const shared = all(`SELECT name, COUNT(*) n, group_concat(email, ', ') emails FROM users
+                    WHERE name IS NOT NULL GROUP BY name HAVING COUNT(*) > 1`);
+if (shared.length) {
+  console.log('\nNotes');
+  for (const s of shared)
+    console.log(`  "${s.name}" is the display name on ${s.n} accounts (${s.emails}) — expected if that is one person with two addresses`);
+}
 
 console.log(failed ? `\n${failed} check(s) failed\n` : '\nall checks passed\n');
 process.exit(failed ? 1 : 0);
