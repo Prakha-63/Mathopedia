@@ -1,9 +1,26 @@
 #!/bin/bash
 # Server-side regression. Read-only against real content; the one write test
 # uses an isolated throwaway account that is removed at the end.
+#
+# Demo passwords are generated per installation and are not in version
+# control, so they are read from data/demo-credentials.txt rather than
+# hardcoded here. Run `npm run migrate` or `npm run rotate-demo-passwords`
+# if that file is missing.
 B=http://127.0.0.1:3001
 J="Content-Type: application/json"
 D=$(mktemp -d)
+
+CREDS="$(dirname "$0")/../data/demo-credentials.txt"
+if [ ! -f "$CREDS" ]; then
+  echo "  data/demo-credentials.txt not found — run: npm run rotate-demo-passwords"; exit 2
+fi
+pw_for(){ awk -v u="$1" '
+  $1=="username" && $2==u { found=1; next }
+  found && $1=="password" { print $2; exit }' "$CREDS"; }
+PW_ADMIN=$(pw_for admin); PW_READER=$(pw_for reader)
+if [ -z "$PW_ADMIN" ] || [ -z "$PW_READER" ]; then
+  echo "  could not read admin/reader passwords from $CREDS"; exit 2
+fi
 pass=0; fail=0
 chk(){ # chk <label> <expected> <actual>
   if [ "$2" = "$3" ]; then printf "  ok    %-44s %s\n" "$1" "$3"; pass=$((pass+1));
@@ -16,7 +33,7 @@ chk "config endpoint"            200 "$(code $B/api/config)"
 chk "me, not signed in"          401 "$(code $B/api/me)"
 chk "login, wrong password"      401 "$(code -X POST $B/api/login -H "$J" -d '{"email":"admin","password":"wrong"}')"
 chk "login, unknown user"        401 "$(code -X POST $B/api/login -H "$J" -d '{"email":"nobody@nowhere.test","password":"whatever"}')"
-chk "login, correct"             200 "$(code -c $D/admin.txt -X POST $B/api/login -H "$J" -d '{"email":"admin","password":"admin123"}')"
+chk "login, correct"             200 "$(code -c $D/admin.txt -X POST $B/api/login -H "$J" -d "{\"email\":\"admin\",\"password\":\"$PW_ADMIN\"}")"
 chk "me, signed in"              200 "$(code -b $D/admin.txt $B/api/me)"
 chk "register, short password"   400 "$(code -X POST $B/api/register -H "$J" -d '{"email":"x@y.test","password":"short"}')"
 chk "register, bad email"        400 "$(code -X POST $B/api/register -H "$J" -d '{"email":"notanemail","password":"longenough1"}')"
@@ -34,7 +51,7 @@ echo "AUTHORIZATION"
 chk "admin users, anonymous"     401 "$(code $B/api/admin/users)"
 chk "admin audit, anonymous"     401 "$(code $B/api/admin/audit)"
 chk "admin stats, anonymous"     401 "$(code $B/api/admin/stats)"
-curl -s -c $D/reader.txt -X POST $B/api/login -H "$J" -d '{"email":"reader","password":"reader123"}' -o /dev/null
+curl -s -c $D/reader.txt -X POST $B/api/login -H "$J" -d "{\"email\":\"reader\",\"password\":\"$PW_READER\"}" -o /dev/null
 chk "admin users, as visitor"    403 "$(code -b $D/reader.txt $B/api/admin/users)"
 chk "create article, as visitor" 403 "$(code -b $D/reader.txt -X POST $B/api/articles -H "$J" -d '{"title":"x"}')"
 chk "create article, anonymous"  401 "$(code -X POST $B/api/articles -H "$J" -d '{"title":"x"}')"

@@ -5,8 +5,18 @@ J="Content-Type: application/json"
 D=$(mktemp -d)
 jq(){ node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(eval('(x=>('+process.argv[1]+'))')(JSON.parse(d)))}catch(e){console.log('(unparsed) '+d.slice(0,120))}})" "$1"; }
 
-curl -s -c $D/con.txt -X POST $B/api/login -H "$J" -d '{"email":"contributor","password":"contrib123"}' -o /dev/null
-curl -s -c $D/rev.txt -X POST $B/api/login -H "$J" -d '{"email":"reviewer","password":"review123"}' -o /dev/null
+# Demo passwords are per-installation and not in version control.
+CREDS="$(dirname "$0")/../data/demo-credentials.txt"
+if [ ! -f "$CREDS" ]; then
+  echo "  data/demo-credentials.txt not found — run: npm run rotate-demo-passwords"; exit 2
+fi
+pw_for(){ awk -v u="$1" '
+  $1=="username" && $2==u { found=1; next }
+  found && $1=="password" { print $2; exit }' "$CREDS"; }
+PW_CON=$(pw_for contributor); PW_REV=$(pw_for reviewer)
+
+curl -s -c $D/con.txt -X POST $B/api/login -H "$J" -d "{\"email\":\"contributor\",\"password\":\"$PW_CON\"}" -o /dev/null
+curl -s -c $D/rev.txt -X POST $B/api/login -H "$J" -d "{\"email\":\"reviewer\",\"password\":\"$PW_REV\"}" -o /dev/null
 
 echo "SETUP — contributor submits an article"
 NEW=$(curl -s -b $D/con.txt -X POST $B/api/articles -H "$J" -d '{

@@ -3,6 +3,10 @@
 .env.*
 !.env.example
 
+# the generated demo-account passwords; regenerate with scripts/rotate-demo-passwords.js
+data/demo-credentials.txt
+*credentials*.txt
+
 # the database and SQLite's sidecar files (WAL holds uncheckpointed data)
 data/*.db
 data/*.db-wal

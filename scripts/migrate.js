@@ -10,13 +10,46 @@
 */
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import bcrypt from 'bcryptjs';
 import { db, all, one, run, tx, now, j } from '../server/db.js';
 
-const d = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'dump.json'), 'utf8'));
+const here = path.dirname(fileURLToPath(import.meta.url));
+const d = JSON.parse(fs.readFileSync(path.join(here, 'dump.json'), 'utf8'));
 const t = now();
 const say = (n, what) => console.log(String(n).padStart(5), what);
+
+/* A demo password nobody has to memorise but nobody can guess either.
+   The alphabet omits characters that are easy to misread when retyping. */
+const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+const SYMS = '!@#$%&*?-_';
+function newPassword(len = 20) {
+  const bytes = crypto.randomBytes(len * 2);
+  let out = '';
+  for (let i = 0; out.length < len - 2; i++) out += ALPHA[bytes[i] % ALPHA.length];
+  for (const s of [SYMS[crypto.randomBytes(1)[0] % SYMS.length],
+                   SYMS[crypto.randomBytes(1)[0] % SYMS.length]]) {
+    const at = crypto.randomBytes(1)[0] % out.length;
+    out = out.slice(0, at) + s + out.slice(at);
+  }
+  return out;
+}
+
+/* The only place the literals exist. Git-ignored; see .gitignore. */
+function writeCredentials(rows) {
+  const file = path.join(here, '..', 'data', 'demo-credentials.txt');
+  const body =
+`MATHOPEDIA — DEMO ACCOUNT CREDENTIALS
+Generated ${new Date().toISOString().slice(0, 16).replace('T', ' ')}
+
+This file is git-ignored and must never be committed.
+Sign in with the USERNAME, not the email.
+
+` + rows.map(r => `  ${r.role.toUpperCase()}\n    username  ${r.username}\n    password  ${r.password}\n    person    ${r.name}\n`).join('\n');
+  fs.appendFileSync(file, (fs.existsSync(file) ? '\n\n' : '') + body, 'utf8');
+  console.log(`      credentials written to data/demo-credentials.txt`);
+}
 
 /* a date like 'Jun 3, 2026' -> epoch ms; unparseable dates keep the import
    moving rather than failing, and fall back to the run time */
@@ -50,12 +83,33 @@ tx(() => {
 
   /* The demo logins are the same people as the seeded authors above. Give the
      existing row a username and password rather than creating a second account
-     for the same human, which would split their articles across two identities. */
-  let demo = 0;
+     for the same human, which would split their articles across two identities.
+
+     dump.json carries no passwords. It used to, in plaintext, which meant the
+     literals were in version control and every re-run reset the accounts back
+     to them. Each install now mints its own random password for an account
+     that does not already have one, and writes the set to
+     data/demo-credentials.txt, which is git-ignored.
+
+     An account that already has a password_hash is never touched, so running
+     this a second time cannot undo a rotation. */
+  const minted = [];
+  let demo = 0, kept = 0;
   for (const a of d.accounts) {
-    if (!a.password) continue;                       // nothing to carry over
-    const hash = bcrypt.hashSync(a.password, 12);    // never store the literal
     const existing = byName.get(a.name);
+    const current = existing
+      ? one('SELECT password_hash FROM users WHERE id = ?', existing)
+      : one('SELECT password_hash FROM users WHERE username = ?', a.username);
+
+    let hash = current?.password_hash || null;
+    if (!hash) {
+      const pw = newPassword();
+      hash = bcrypt.hashSync(pw, 12);                // same cost as server/auth.js
+      minted.push({ username: a.username, role: a.role, name: a.name, password: pw });
+    } else {
+      kept++;
+    }
+
     if (existing) {
       run(`UPDATE users SET password_hash = ?, username = ?, role = ?, email_verified = 1,
              credential = COALESCE(credential, ?) WHERE id = ?`,
@@ -63,14 +117,14 @@ tx(() => {
     } else {
       const email = `${a.username}@demo.mathopedia.invalid`;
       run(`INSERT INTO users (email,password_hash,name,username,credential,role,email_verified,active,created_at)
-           VALUES (?,?,?,?,?,?,1,1,?) ON CONFLICT(email) DO UPDATE SET
-             password_hash=excluded.password_hash, role=excluded.role`,
+           VALUES (?,?,?,?,?,?,1,1,?) ON CONFLICT(email) DO UPDATE SET role=excluded.role`,
           email, hash, a.name, a.username, a.credential || null, a.role, t);
       byName.set(a.name, one('SELECT id FROM users WHERE email = ?', email).id);
     }
     demo++;
   }
-  say(demo, 'demo logins (passwords hashed)');
+  say(demo, `demo logins (${minted.length} newly minted, ${kept} existing passwords left untouched)`);
+  if (minted.length) writeCredentials(minted);
 
   // ------------------------------------------------------------ concepts + edges
   for (const c of d.concepts) {

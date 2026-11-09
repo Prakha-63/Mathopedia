@@ -2377,12 +2377,12 @@ html[data-unavailable] body > *:not(.srv-down){ display:none !important }
           <details class="demo-keys-fold">
             <summary>Demo accounts</summary>
             <div class="demo-keys">
-              <div class="demo-key" onclick="fillLogin('reader')"><div class="dk-role">Reader<span>Browse, bookmark, discuss</span></div><div class="dk-cred">reader<br>reader123</div></div>
-              <div class="demo-key" onclick="fillLogin('contributor')"><div class="dk-role">Contributor<span>Write and submit</span></div><div class="dk-cred">contributor<br>contrib123</div></div>
-              <div class="demo-key" onclick="fillLogin('reviewer')"><div class="dk-role">Reviewer<span>Decide on submissions</span></div><div class="dk-cred">reviewer<br>review123</div></div>
-              <div class="demo-key" onclick="fillLogin('admin')"><div class="dk-role">Administrator<span>Seeded admin account</span></div><div class="dk-cred">admin<br>admin123</div></div>
+              <div class="demo-key" onclick="fillLogin('reader')"><div class="dk-role">Reader<span>Browse, bookmark, discuss</span></div><div class="dk-cred">reader</div></div>
+              <div class="demo-key" onclick="fillLogin('contributor')"><div class="dk-role">Contributor<span>Write and submit</span></div><div class="dk-cred">contributor</div></div>
+              <div class="demo-key" onclick="fillLogin('reviewer')"><div class="dk-role">Reviewer<span>Decide on submissions</span></div><div class="dk-cred">reviewer</div></div>
+              <div class="demo-key" onclick="fillLogin('admin')"><div class="dk-role">Administrator<span>Seeded admin account</span></div><div class="dk-cred">admin</div></div>
             </div>
-            <p class="auth-foot"><b>Demo accounts.</b> These are real accounts in the local database, verified by the server like any other. Signing in routes you by role — administrators to the console, reviewers to the workspace, contributors to the editor.</p>
+            <p class="auth-foot"><b>Demo accounts.</b> These are real accounts in the database, verified by the server like any other. Choosing one fills the username; the password is set per installation and is not published here — whoever runs this server has it in <code>data/demo-credentials.txt</code>. Signing in routes you by role — administrators to the console, reviewers to the workspace, contributors to the editor.</p>
           </details>
         </div>
       </section>
@@ -4289,11 +4289,17 @@ function nextUserId(){
 /* submitRegistration: an earlier definition stood here — replaced by the AuthService version; never reached. Removed; the live one is below. */
 
 
+/* Fills the username only. The passwords are generated per installation and
+   held in data/demo-credentials.txt, so the page has nothing to fill in —
+   it used to read acct.password, which stopped existing when the literals
+   were taken out of the page, and quietly typed "undefined" into the field. */
 function fillLogin(username){
   const acct = accountByUsername(username);
   if(!acct) return;
   document.getElementById('login-user').value = acct.username;
-  document.getElementById('login-pass').value = acct.password;
+  const pw = document.getElementById('login-pass');
+  pw.value = '';
+  pw.focus();
   document.getElementById('login-error').classList.remove('show');
 }
 
