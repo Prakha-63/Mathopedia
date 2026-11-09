@@ -6,13 +6,13 @@
   "description": "A peer-reviewed encyclopedia of mathematics — Express + SQLite/FTS5, served from one origin.",
   "main": "server/server.js",
   "scripts": {
-    "start": "node --experimental-sqlite --no-warnings --env-file=.env server/server.js",
-    "migrate": "node --experimental-sqlite --no-warnings --env-file=.env scripts/migrate.js",
-    "check": "node --experimental-sqlite --no-warnings --env-file=.env scripts/check.js",
-    "rotate-demo-passwords": "node --experimental-sqlite --no-warnings --env-file=.env scripts/rotate-demo-passwords.js"
+    "start": "node --experimental-sqlite --no-warnings --env-file-if-exists=.env server/server.js",
+    "migrate": "node --experimental-sqlite --no-warnings --env-file-if-exists=.env scripts/migrate.js",
+    "check": "node --experimental-sqlite --no-warnings --env-file-if-exists=.env scripts/check.js",
+    "rotate-demo-passwords": "node --experimental-sqlite --no-warnings --env-file-if-exists=.env scripts/rotate-demo-passwords.js"
   },
   "engines": {
-    "node": ">=22.5.0"
+    "node": ">=22.9.0"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

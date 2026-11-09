@@ -56,9 +56,18 @@ state.
 
 ## Requirements
 
-- **Node.js 22.5 or newer.** The built-in `node:sqlite` module is required;
-  there is no `better-sqlite3` to compile.
+- **Node.js 22.9 or newer.** Two built-ins are relied on: `node:sqlite`, so
+  there is no `better-sqlite3` to compile, and the `--env-file-if-exists`
+  flag, which arrived in 22.9.
 - No database server, no build step, no bundler.
+
+The npm scripts all pass `--env-file-if-exists=.env` rather than
+`--env-file=.env`. Node exits with `.env: not found` when `--env-file` names
+a file that is not there, and `.env` is git-ignored — so on a host that
+injects environment variables directly, the strict form crash-loops before
+the server can listen. The `if-exists` form reads `.env` during local
+development and carries on without it in production, so one command serves
+both.
 
 ## Installation
 
