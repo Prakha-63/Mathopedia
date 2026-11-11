@@ -154,7 +154,6 @@ textarea, input, select{ font-family:var(--ui) }
 .contrib-article .d{ width:6px; height:6px; border-radius:50%; flex-shrink:0 }
 .contrib-article-title{ flex:1 }
 .contrib-article-meta{ font-size:11px; color:var(--ink-faint) }
-.banner-note{ background:var(--sunken); color:var(--ink-soft); border-bottom:1px solid var(--rule); font-family:var(--ui); font-size:11.5px; line-height:1.5; padding:9px 34px; text-align:center }
 #toast.show{ opacity:1; transform:translate(-50%, 0) }
 .wrap{ max-width:1280px; margin:0 auto; padding:0 34px }
 .view{ display:none }
@@ -1273,7 +1272,7 @@ table.data td, table.hist td{ font-size:12.5px }
 }
 
 @media print{
-header, .banner-note, .action-row, .tabs, footer, .toc, .side-block, .print-hide{ display:none !important }
+header, .action-row, .tabs, footer, .toc, .side-block, .print-hide{ display:none !important }
   .article-body-layout{ grid-template-columns:1fr !important }
   .article-content, .abstract, .refs{ max-width:none }
   body{ background:#fff; color:#000 }
@@ -1807,7 +1806,7 @@ html[data-unavailable] body > *:not(.srv-down){ display:none !important }
         <button type="button" class="skin-opt active" data-skin="original" onclick="setSkin('original')"
                 title="Original theme — cool neutrals" aria-label="Original theme">Original</button>
         <button type="button" class="skin-opt" data-skin="editorial" onclick="setSkin('editorial')"
-                title="Editorial theme — warm paper, burgundy and gold" aria-label="Editorial theme">Editorial</button>
+                title="Journal theme — warm paper, burgundy and gold" aria-label="Journal theme">Journal</button>
       </div>
       <button class="theme-btn" onclick="toggleTheme()" title="Toggle light / dark" aria-label="Toggle light or dark theme">
         <svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
@@ -1824,9 +1823,6 @@ html[data-unavailable] body > *:not(.srv-down){ display:none !important }
     </div>
   </div>
 </header>
-<div class="banner-note">
-  Running locally. Accounts, articles, reviews and revisions are held in the project's SQLite database and persist across restarts. The sign-in page lists demo accounts so the Contributor, Reviewer and Administrator workflows can be examined without registering.
-</div>
 
 <div id="toast"></div>
 
@@ -7960,8 +7956,10 @@ const SKINS = {
     label:'Original',
     cats:{ light: CATS_ORIGINAL, dark: CATS_ORIGINAL },
   },
+  /* The key stays 'editorial' — it is wired into a dozen CSS selectors and
+     into the saved localStorage preference. Only the visible label changed. */
   editorial: {
-    label:'Editorial',
+    label:'Journal',
     cats:{
       light:{
         algebra:'#7A263A', analysis:'#7D5A76', topology:'#4F7A6A', numtheory:'#A85C3A',
