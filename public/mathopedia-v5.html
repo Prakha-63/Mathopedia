@@ -1804,7 +1804,7 @@ html[data-unavailable] body > *:not(.srv-down){ display:none !important }
     <div class="header-right">
       <div class="skin-switch" role="group" aria-label="Visual theme">
         <button type="button" class="skin-opt active" data-skin="original" onclick="setSkin('original')"
-                title="Original theme — cool neutrals" aria-label="Original theme">Original</button>
+                title="Screen theme — cool neutrals, built for backlit reading" aria-label="Screen theme">Screen</button>
         <button type="button" class="skin-opt" data-skin="editorial" onclick="setSkin('editorial')"
                 title="Journal theme — warm paper, burgundy and gold" aria-label="Journal theme">Journal</button>
       </div>
@@ -7951,13 +7951,16 @@ const el = id => document.getElementById(id);
    duplicated component code. Adding Theme C means one CSS block and one row.
    ========================================================================== */
 const CATS_ORIGINAL = JSON.parse(JSON.stringify(CATS));
+/* Screen and Journal name what the two palettes are for: cool neutrals for a
+   backlit display, warm paper for print. Both keys stay as they were —
+   'original' and 'editorial' are wired into CSS selectors and into the saved
+   localStorage preference, so renaming them would reset the skin for anyone
+   who had already picked one. Only the labels changed. */
 const SKINS = {
   original: {
-    label:'Original',
+    label:'Screen',
     cats:{ light: CATS_ORIGINAL, dark: CATS_ORIGINAL },
   },
-  /* The key stays 'editorial' — it is wired into a dozen CSS selectors and
-     into the saved localStorage preference. Only the visible label changed. */
   editorial: {
     label:'Journal',
     cats:{
